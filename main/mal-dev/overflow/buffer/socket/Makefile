@@ -20,7 +20,6 @@ CC      = clang
 # ⚠️  FLAGS VULNERABLES — eliminamos TODAS las protecciones:
 #   -O0                  → sin optimización (stack más predecible)
 #   -fno-stack-protector → desactiva stack canary (cookie de protección)
-#   -z execstack         → stack ejecutable (permite ejecutar shellcode)
 #   -D_FORTIFY_SOURCE=0  → desactiva chequeos de funciones peligrosas
 #   -mno-sse2            → evita que el compilador use registros XMM
 #                          que alinean el stack de forma impredecible
@@ -40,7 +39,6 @@ all: $(EXE)
 $(EXE): $(SRC_MAIN)
 	@echo "Compilando main.exe VULNERABLE para Windows..."
 	$(CC) $(CFLAGS) $(TARGET) $(SRC_MAIN) $(LDFLAGS) -o $(EXE)
-	$(RUN_CMD)
 
 clean:
 	@echo "Limpiando..."

@@ -5,7 +5,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 
 #define PORT    "9000"
-#define BUFSIZE  512
+#define BUFSIZE 5 
 
 /* =========================================================
    FASE 0 — Inicializar y limpiar Winsock
@@ -98,7 +98,8 @@ int recv_linea(SOCKET client, char *linea, int maxlen) {
     char c;
     int n;
 
-    while (total < maxlen - 1) {
+    // while (total < maxlen - 1) {
+    while (1) {
         n = recv(client, &c, 1, 0);
 
         if (n == 0)           return 0;  // cliente cerró la conexión
