@@ -1,4 +1,4 @@
-\section{DLL (Dynamic-Link Library)}
+\subsection{DLL (Dynamic-Link Library)}
 
 La mayoría de los ejecutables actuales dependen de librerías externas, algunas proporcionadas por el sistema operativo, como las funciones de entrada/salida de C (por ejemplo, \texttt{printf}, que se encuentra en \texttt{msvcrt.dll}), y otras que pueden ser librerías de terceros.  
 
@@ -11,7 +11,7 @@ Estas dependencias pueden manejarse de dos formas:
 
 Las DLL son archivos con formato PE, muy similares a los ejecutables. Cada módulo contiene sus propias cabeceras y secciones, tal como se explicó en el apartado de PE files, y se mapean en memoria de manera similar a un ejecutable.
 
-\subsection{Carga de DLLs}
+\subsubsection{Carga de DLLs}
 
 Las DLL se cargan en el espacio de direcciones del proceso de dos formas:
 
@@ -22,7 +22,7 @@ Las DLL se cargan en el espacio de direcciones del proceso de dos formas:
 
 Una vez cargada, la DLL queda registrada en el \textit{Process Environment Block (PEB)} del proceso. Si, en algún momento posterior, otro módulo intenta cargar la misma DLL, el sistema verifica el PEB y, en lugar de cargarla de nuevo, reutiliza la instancia ya existente en memoria.
 
-\subsubsection{Orden de búsqueda de DLLs en Windows}
+\paragraph{Orden de búsqueda de DLLs en Windows}
 
 El sistema operativo busca las DLL en el siguiente orden:
 

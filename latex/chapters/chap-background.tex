@@ -1,0 +1,54 @@
+
+
+\chapter{Background}
+\label{chap:background}
+
+\section{MITRE ATT\&CK}
+
+MITRE ATT\&CK es el marco de referencia fundamental para describir y clasificar el comportamiento de actores maliciosos en ejercicios de \textit{Adversary Emulation}. Su estructura proporciona un vocabulario común basado en tres niveles de abstracción:
+
+\begin{itemize}
+    \item \textbf{Tácticas (el ``para qué'')}: Representan los objetivos tácticos del adversario en cada fase del ataque. Describen la meta que se pretende alcanzar, como obtener acceso inicial, elevar privilegios o exfiltrar información.
+
+    \item \textbf{Técnicas (el ``qué'')}: Definen el método concreto que utiliza el adversario para cumplir una táctica. Representan la acción observable destinada a lograr el objetivo, como el uso de \textit{phishing}, ejecución de comandos o inyección de procesos.
+
+    \item \textbf{Procedimientos (el ``cómo'')}: Son la implementación específica de una técnica. Detallan los pasos exactos, herramientas, parámetros y artefactos utilizados por un atacante. Un procedimiento debe ser lo suficientemente preciso como para que el \textit{Blue Team} pueda generar reglas de detección y el \textit{Red Team} pueda reproducirlo fielmente.
+\end{itemize}
+
+Este modelo estructurado permite mapear comportamientos reales, estandarizar evaluaciones y alinear las actividades defensivas y ofensivas dentro de un lenguaje común.
+
+\section{Cyber Kill Chain (CKC)}
+
+La \textit{Cyber Kill Chain}, desarrollada por Lockheed Martin, describe las fases operativas de un ciberataque con el objetivo de estructurar y contextualizar las acciones del adversario. No se trata de un marco rígido, sino de un modelo conceptual que divide el ataque en etapas bien definidas para facilitar su análisis, detección e interrupción. El modelo identifica las tareas que un adversario debe completar para alcanzar su objetivo final, permitiendo anticipar comportamientos y reforzar las defensas en cada fase.
+
+Los siete pasos de la \textit{Cyber Kill Chain} mejoran la visibilidad del analista sobre el ataque y enriquecen su comprensión de las tácticas, técnicas y procedimientos (TTPs) empleados por el adversario.
+
+\begin{enumerate}
+    \item \textbf{Reconocimiento}: Investigación del objetivo y recolección de información.
+    \item \textbf{Armamento}: Preparación o creación del payload y capacidades ofensivas asociadas.
+    \item \textbf{Entrega}: Transmisión del payload mediante el vector seleccionado.
+    \item \textbf{Explotación}: Activación del payload aprovechando una vulnerabilidad o interacción del usuario.
+    \item \textbf{Instalación}: Establecimiento del implante y preparación del entorno persistente.
+    \item \textbf{Mando y Control (C2)}: Creación del canal de comunicación entre el host comprometido y el adversario.
+    \item \textbf{Acciones sobre Objetivos}: Ejecución de los objetivos finales, como movimiento lateral, exfiltración o impacto.
+\end{enumerate}
+
+\section{Threat Intelligence}
+
+La Inteligencia de Amenazas es esencial para la simulación de adversarios (\textit{Adversary Simulation}), ya que transforma datos sobre actores maliciosos, campañas y vulnerabilidades en información procesable. Se nutre de análisis técnicos, alertas de organismos de ciberseguridad, investigaciones de la industria y colecciones especializadas de TTPs mantenidas por la comunidad, como la \textit{Adversary Emulation Library} \cite{mitreAEL}, desarrollada por el \textit{MITRE Center for Threat-Informed Defense}. Este recurso proporciona perfiles de adversarios basados en comportamientos observados en grupos APT, aportando una base verificable para la creación de escenarios.
+
+Esta información, estructurada mediante MITRE ATT\&CK y contextualizada a través de la \textit{Cyber Kill Chain}, permite diseñar simulaciones realistas, evaluar defensas, identificar brechas y entrenar al personal frente a amenazas alineadas con el panorama actual.
+
+\section{Windows Internals}
+
+\input{annexe_windows_internals/annex-virutual-memory.tex}
+\newpage
+\input{annexe_windows_internals/annex-pe-files.tex}
+\newpage
+\input{annexe_windows_internals/annex-process.tex}
+\newpage
+\input{annexe_windows_internals/annex-dynamic-link-library.tex}
+\newpage
+\input{annexe_windows_internals/annex-threads.tex}
+\newpage
+\input{annexe_windows_internals/annex-ring-levels.tex}

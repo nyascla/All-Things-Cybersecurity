@@ -1,0 +1,479 @@
+\chapter{Red Team Notes}
+
+\label{chap:red-team}
+
+En esta sección se presentan todos los detalles relacionados con el desarrollo técnico del ataque, incluyendo la justificación de las decisiones adoptadas y las referencias a los repositorios necesarios para comprender y reproducir las técnicas empleadas.
+
+\section{Acceso Inicial: Justificación del Uso de BadUSB}
+\label{sec:bad-usb}
+
+El vector de \textit{Initial Access} seleccionado para este proyecto se basa en el uso de un dispositivo \textit{BadUSB}. Aunque no se trata de un método habitual en operaciones reales —debido a la necesidad de acceso físico, la existencia de controles como el bloqueo de puertos USB o la restricción de combinaciones como \texttt{Win + R}— su utilización resulta especialmente adecuada en un contexto didáctico.
+
+La elección de BadUSB responde a su capacidad para ofrecer un escenario de ataque claro, reproducible y fácilmente comprensible. Permite demostrar de forma directa cómo una simple emulación de teclado puede derivar en la ejecución de código arbitrario en un sistema protegido, mostrando así el impacto que puede tener un fallo en los controles físicos o en las políticas de endurecimiento del puesto de trabajo.
+
+Desde una perspectiva de ciberseguridad, este vector no difiere conceptualmente de otros métodos de acceso inicial ampliamente empleados por actores maliciosos. Tanto la explotación de vulnerabilidades (que suele culminar en la ejecución de un \textit{payload} en memoria) como las campañas de \textit{phishing} que despliegan instaladores maliciosos (\texttt{.msi}, \texttt{.exe}) o capturan credenciales válidas, comparten la misma finalidad: obtener la primera ejecución de código en el sistema de la víctima.
+
+Para este ejercicio se empleó un payload BadUSB de desarrollo propio, adaptado al escenario del laboratorio \cite{badusb-payload}.
+
+\subsection{Bypass de AMSI}
+
+Cuando el acceso inicial se realiza mediante un dispositivo BadUSB, la ejecución del código suele producirse a través de PowerShell. Esto implica que el primer mecanismo defensivo que debe evadirse habitualmente es AMSI (Antimalware Scan Interface), ya que intercepta y analiza el contenido antes de que PowerShell lo interprete.
+
+Uno de los bypasses más utilizados es la técnica conocida como \textit{AMSI Bypass – Memory Patching}. Durante la ejecución de código, PowerShell —o cualquier motor de scripting— invoca la función \texttt{AmsiScanBuffer()} presente en \texttt{amsi.dll}. Mediante la modificación en tiempo de ejecución de los bytes asociados al valor de retorno de esta función, es posible forzar que devuelva siempre un resultado “limpio” (por ejemplo, \texttt{0x80070057}, correspondiente a \texttt{E\_INVALIDARG}). En muchas versiones de Windows, AMSI interpreta este estado como un fallo no malicioso y permite la ejecución del contenido sin aplicar medidas de bloqueo. \textit{AMSI Bypass – Memory Patching: \cite{amsi-bypass-patching}}
+
+En determinados escenarios, AMSI puede detectar intentos de manipulación directa de \texttt{AmsiScanBuffer()} y finalizar el proceso de manera inmediata, lo que limita la eficacia del método anterior. Para abordar esta situación se emplea una técnica alternativa ampliamente documentada.
+
+El segundo método utilizado fue el \textit{AMSI Bypass – Memory Patching via Reflection}. Durante la inicialización de PowerShell, la clase privada \\ \texttt{System.Management.Automation.AmsiUtils} crea una variable estática denominada \texttt{amsiInitFailed}. Si este valor se establece en \texttt{true}, AMSI considera que su inicialización ha fallado y desactiva de forma global todos los análisis para el resto de la sesión, independientemente de que \texttt{amsi.dll} continúe cargada y operativa. Este enfoque resulta especialmente útil en entornos donde el parcheo directo del buffer es detectado y bloqueado. \textit{AMSI Bypass - Memory Patching via Reflection: \cite{amsi-bypass-reflection}}
+
+
+\section{Programar shellcodes}
+\label{sec:shellcode}
+
+Un shellcode es una secuencia de instrucciones ensambladas en formato position-independent, capaz de ejecutarse en cualquier ubicación de memoria sin asumir un punto de entrada fijo. Esto permite que, independientemente de dónde sea cargado el bloque de código, su ejecución produzca un comportamiento controlado y determinista, característica esencial en escenarios de explotación y ejecución arbitraria.
+
+\subsection{Position-Independent Code (PIC)}
+
+Una característica fundamental del \textit{shellcode} es que debe estar implementado como \textit{Position-Independent Code} (PIC). Esto implica que el código puede ejecutarse desde cualquier dirección de memoria sin asumir un \textit{entry point} fijo. A diferencia de los programas compilados tradicionalmente —por ejemplo, un binario en C— que comienzan su ejecución en una dirección conocida y pueden referenciar offsets internos predecibles, un \textit{shellcode} se ejecuta desde ubicaciones arbitrarias, desconocidas para sí mismo.
+
+Para funcionar correctamente en este entorno dinámico, el \textit{shellcode} debe ser capaz de determinar en tiempo de ejecución su posición en memoria. En arquitecturas como x86, una técnica clásica para lograrlo es el patrón \texttt{call-pop}, que permite recuperar el valor del contador de programa (\texttt{EIP}):
+
+\begin{verbatim}
+_start:
+    call geteip
+
+geteip:
+    pop edx
+    lea edx, [edx - 5]
+\end{verbatim}
+
+La instrucción \texttt{call} empuja en la pila la dirección de retorno, que corresponde a la siguiente instrucción ejecutable. Al hacer un \texttt{pop} sobre ese valor, el \textit{shellcode} recupera la dirección efectiva donde se encuentra en memoria. Restando el tamaño de la instrucción previa, se obtiene así el punto de inicio del propio bloque de código.  
+
+Esta técnica permite que el \textit{shellcode} utilice rutas relativas para acceder a datos incrustados, cadenas, estructuras o código adicional, manteniendo su independencia respecto a la dirección donde haya sido inyectado.
+
+
+\subsection{Runtime Linking}
+
+Una vez resuelto el problema del \textit{Position Independent Code} (PIC), el siguiente desafío fundamental en el desarrollo de shellcode es cómo invocar código de librerías dinámicas del sistema operativo. Cualquier operación relevante en Windows —como gestionar archivos, crear procesos o interactuar con memoria— requiere acceder a las \textit{system calls} expuestas a través de módulos como \texttt{kernel32.dll}. Sin embargo, en un shellcode no disponemos del trabajo que normalmente realizan el \textit{linker} en tiempo de compilación y el \textit{loader} en tiempo de carga, por lo que debemos reproducir este proceso manualmente durante la ejecución.
+
+El objetivo principal consiste en localizar módulos cargados en el proceso y resolver las direcciones de sus funciones exportadas en tiempo de ejecución. Para ello recurrimos al \textit{Process Environment Block} (PEB), cuya dirección es mantenida por la CPU en registros dedicados (\texttt{FS:[0x30]} en x86 y \texttt{GS:[0x60]} en x64). Desde el PEB es posible iterar sus estructuras internas, en particular la lista doblemente enlazada \textit{InMemoryOrderModuleList}, que contiene información sobre todos los módulos cargados, incluyendo sus \textit{base addresses}.
+
+Una vez obtenida la base de un módulo concreto, el siguiente paso es analizar sus encabezados PE hasta localizar la \textit{Export Table}. Esta tabla contiene los nombres de las funciones exportadas, sus \textit{ordinals} y, lo más importante, los \textit{Relative Virtual Addresses} (RVAs) que permiten calcular la dirección real de cada función mediante:
+
+\[
+\text{func\_addr} = \text{module\_base} + \text{RVA}
+\]
+
+Iterando esta tabla hasta encontrar la función deseada, el shellcode puede reconstruir la dirección exacta y, a partir de ese momento, invocar la API igual que lo haría un binario convencional.
+
+Este mecanismo resuelve completamente la problemática del \textit{runtime linking} dentro de un entorno sin información previa como es el shellcode. Para este proyecto se han utilizado implementaciones propias en ensamblador tanto para la obtención del \textit{module base address} a través del PEB, como para la resolución dinámica de funciones exportadas. Dichas implementaciones pueden consultarse en los siguientes repositorios:
+
+\begin{itemize}
+    \item Implementación de \texttt{GetModuleHandle}-like:
+    \begin{itemize}
+        \item x64: \cite{x64_get_module}
+        \item x86: \cite{x86_get_module}
+    \end{itemize}
+    \item Implementación de \texttt{GetProcAddress}-like:
+    \begin{itemize}
+        \item x64: \cite{x64_get_proc}
+        \item x86: \cite{x86_get_proc}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Hashing de nombres de funciones}
+
+Como medida de evasión y anti-análisis, es conveniente evitar incluir cadenas de texto en claro dentro del shellcode. Si los nombres de las funciones o módulos aparecen directamente en el binario, un analista puede identificarlos de manera inmediata aplicando herramientas básicas de extracción de cadenas. Para mitigar esto, una técnica habitual consiste en emplear algoritmos de \textit{hashing} para representar los nombres de las funciones que queremos resolver en tiempo de ejecución.
+
+En este proyecto se ha implementado un sistema de hashing sencillo basado en rotaciones y operaciones XOR. Con este mecanismo, el shellcode almacena únicamente los valores hash, lo que dificulta la identificación directa de las APIs utilizadas. Durante la ejecución, las funciones exportadas del módulo correspondiente se recorren una a una, calculando su hash y comparándolo con el valor objetivo.
+
+Las implementaciones en ensamblador utilizadas son las siguientes:
+
+\begin{itemize}
+    \item Hashing x64: \cite{x64_hash}
+    \item Hashing x86: \cite{x86_hash}
+\end{itemize}
+
+\subsection{ABI en x86 y x64}
+
+Finalmente, al trabajar con shellcode es imprescindible respetar las reglas de la \textit{Application Binary Interface} (ABI), especialmente en entornos x64. En esta arquitectura, la pila debe mantenerse alineada a 16 bytes en el momento de realizar una llamada a una función (\texttt{RSP mod 16 = 0}). Además, la convención de llamadas de Windows x64 exige reservar un \textit{shadow space} de 32 bytes antes de invocar cualquier función de una DLL del sistema; si estas condiciones no se cumplen, las llamadas pueden fallar de forma silenciosa o provocar un comportamiento indefinido.
+
+También es necesario considerar la convención de llamadas utilizada para interactuar con las APIs del sistema. En x86, los argumentos se pasan por pila siguiendo un orden \textit{right-to-left}. En x64, los primeros cuatro parámetros se pasan mediante registros (\texttt{RCX}, \texttt{RDX}, \texttt{R8} y \texttt{R9}), mientras que el resto se colocan en la pila respetando la alineación mencionada. Asimismo, la gestión de \textit{stack frames}, la preservación de registros no volátiles y otras tareas que habitualmente realiza el compilador deben ser manejadas explícitamente dentro del shellcode.
+
+Cumplir estrictamente estas normas resulta esencial para garantizar que las funciones del sistema operativo se ejecuten correctamente y que el shellcode mantenga un comportamiento estable y predecible.
+
+\subsection{Payloads finales}
+
+Una vez establecidos los tres pilares fundamentales para el desarrollo de shellcode —\textit{Position Independent Code} (PIC), \textit{runtime linking} y respeto de la ABI— es posible construir payloads completamente personalizados desde cero.
+
+Como recomendación práctica, resulta útil desarrollar primero el programa equivalente en C y compilarlo sin optimizaciones. Esto permite tener una referencia clara de cómo debería verse el comportamiento final y observar directamente cómo el compilador gestiona aspectos como las llamadas a funciones, las variables locales o el uso del stack.
+
+De forma adicional, en algunas circunstancias puede ser útil cargar un binario compilado en C en una herramienta de análisis estático como IDA, para comprobar el tamaño que el compilador reserva para ciertas variables o estructuras. Esto es especialmente práctico cuando ciertos valores no son triviales de deducir únicamente a partir de la documentación.
+
+A continuación se muestran ejemplos de payloads desarrollados para este proyecto:
+
+\paragraph{MessageBox payload}  
+Un payload sencillo cuyo objetivo es mostrar un \textit{message box}. Se ha utilizado para validar las rutinas de inyección de código y comprobar la correcta resolución de funciones mediante \textit{runtime linking}.
+
+\begin{itemize}
+    \item x64: \cite{github-messagebox-x64}
+    \item x86: \cite{github-messagebox-x86}
+\end{itemize}
+
+\paragraph{Reverse Shell payload}
+Este es el \textbf{payload utilizado en la versión final del ataque} descrito en este trabajo. Se trata de la reverse shell empleada durante toda la ejecución práctica del ejercicio Red Team.
+
+Por motivos didácticos, el shellcode de la reverse shell se ha incluido dentro de un fichero PE mínimo para que quede rastro en disco y su análisis resulte más sencillo posteriormente.
+Para generar este PE se ha utilizado la herramienta \texttt{sclauncher} \cite{sclauncher}, que crea únicamente las cabeceras básicas del ejecutable, define una sección \texttt{.text} y coloca en ella el bloque de shellcode. De este modo, el loader de Windows lo mapea correctamente y transfiere la ejecución a la shellcode sin necesidad de estructuras adicionales.
+
+\begin{itemize}
+\item \textbf{Reverse shell x86 (payload final utilizado en el ataque):} \cite{github-reverseshell-x86}
+\end{itemize}
+
+\section{Inyección de código}
+
+La inyección de código consiste en conseguir que un proceso ejecute instrucciones distintas a las previstas originalmente. Existen múltiples técnicas para lograrlo, pero todas se basan en un principio común: modificar el flujo de ejecución o incorporar código arbitrario dentro del espacio de memoria de un proceso legítimo.
+
+Los métodos clásicos incluyen la reserva de memoria en el proceso objetivo para copiar y ejecutar shellcode, así como la carga forzada de librerías que el binario no tenía previstas. Esta última categoría da lugar a un conjunto amplio de técnicas orientadas a manipular la forma en que Windows resuelve y carga DLLs.
+
+Dentro de estas técnicas, una de las más relevantes y estudiadas es el DLL Hijacking. 
+
+\subsection{DLL Hijacking}
+
+El \textit{DLL Hijacking} consiste en forzar que el \textit{loader} de Windows cargue una biblioteca dinámica controlada por el atacante, aprovechando el orden de búsqueda de DLLs o configuraciones del sistema.
+
+\paragraph{Objetivo principal}  
+Lograr que un ejecutable legítimo cargue una DLL maliciosa con el mismo nombre que una DLL esperada, pero ubicada en una ruta que el atacante controla.
+
+\subsubsection{Orden de carga de DLLs en Windows}
+
+El \textit{loader} resuelve las dependencias siguiendo el siguiente orden:
+
+\begin{enumerate}
+    \item Directorio desde el cual se cargó la aplicación.
+    \item \texttt{C:\textbackslash Windows\textbackslash System32}
+    \item \texttt{C:\textbackslash Windows\textbackslash System}
+    \item \texttt{C:\textbackslash Windows}
+    \item Directorio de trabajo actual (CWD).
+    \item Directorios definidos en la variable de entorno \texttt{PATH} del sistema.
+    \item Directorios definidos en la variable de entorno \texttt{PATH} del usuario.
+\end{enumerate}
+
+\subsubsection{KnownDLLs — Restricción crítica}
+
+Las DLL listadas en:
+
+\begin{verbatim}
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\
+Session Manager\KnownDLLs
+\end{verbatim}
+
+solo pueden cargarse desde \texttt{System32}, lo que imposibilita su secuestro mediante \textit{DLL Hijacking} tradicional.
+
+\section{Weaponización de DLL Hijacking}
+\label{sec:dll-hijacking}
+
+Para transformar este mecanismo en una técnica ofensiva se emplean tres enfoques complementarios: \textit{Side Loading}, \textit{DLL Proxying} y \textit{Reflective Loading}.
+
+En el ataque desarrollado en este trabajo se explota la aplicación legítima \textit{Calibre} y, en concreto, su librería \texttt{calibre-launcher.dll}. La vulnerabilidad asociada a esta DLL está documentada en la plataforma \textit{HijackLibs} \cite{hijacklibs-calibre-launcher}, que mantiene un catálogo actualizado de DLLs susceptibles de ser secuestradas.
+
+El objetivo es conseguir que un ejecutable legítimo, ya presente en el sistema, cargue una DLL bajo control del atacante. En este escenario, la DLL maliciosa actúa como stage 2 del ataque. Su cometido es establecer una conexión con el C2 y descargar la carga final: una DLL que contiene un implante de Sliver. Esta DLL descargada no se escribe en disco en ningún momento; la propia DLL maliciosa la carga directamente en memoria mediante reflective loading y transfiere la ejecución al implante. De este modo, un proceso legítimo termina ejecutando código malicioso sin dejar artefactos en el sistema de archivos.
+
+De este modo, se consigue que un proceso legítimo —en este caso, \textit{Calibre}— ejecute dentro de su propio espacio de direcciones un \textit{implant} de \textit{Sliver}, manteniendo la operación completamente \textit{fileless}.
+
+% -----------------------------------------------------------
+\subsection{Side Loading}
+
+El primer objetivo es conseguir que un ejecutable legítimo cargue nuestra DLL maliciosa. La técnica de \textit{Side Loading} se basa en colocar una DLL bajo control del atacante en el mismo directorio que el ejecutable objetivo, utilizando exactamente el mismo nombre que la DLL legítima que el programa espera cargar. Para ello, es necesario identificar previamente aplicaciones vulnerables a este tipo de \textit{DLL Hijacking}.
+
+Una limitación habitual es que los directorios donde residen los binarios legítimos no permiten la escritura por parte de usuarios sin privilegios elevados, lo que impide introducir la DLL maliciosa directamente. No obstante, estos directorios sí permiten lectura, de modo que el atacante puede copiar el ejecutable legítimo a una ubicación donde sí disponga de permisos de escritura y, posteriormente, insertar allí la DLL manipulada.
+
+Una vez trasladado el ejecutable a un directorio controlado, basta con colocar la DLL maliciosa con el mismo nombre que la DLL legítima requerida por el programa. De este modo, al ejecutarse, el binario cargará la versión maliciosa en lugar de la original.
+
+Por ejemplo, es posible copiar los archivos de la aplicación a un directorio menos restrictivo mediante:
+
+\begin{verbatim}
+robocopy "C:\Program Files\Calibre2" ^
+         "%LOCALAPPDATA%\Microsoft\WindowsApps" ^
+         /E /COPY:DAT /R:3 /W:5
+\end{verbatim}
+
+
+% -----------------------------------------------------------
+\subsection{DLL Proxying}
+
+Con la técnica de \textit{Side Loading} hemos logrado que un ejecutable legítimo cargue una DLL maliciosa. Sin embargo, esto introduce un nuevo problema: al sustituir la DLL original, el programa deja de disponer de las funciones que necesita para funcionar correctamente. Si la DLL maliciosa no reproduce esas exportaciones, la aplicación fallará o directamente no arrancará.
+
+Para resolver este problema se utiliza \textit{DLL Proxying}. Esta técnica consiste en compilar una DLL maliciosa que:
+
+\begin{itemize}
+\item Ejecuta las operaciones ofensivas necesarias (en nuestro caso, cargar en memoria el implante final).
+\item Mantiene toda la funcionalidad original de la DLL legítima, reenviando sus exportaciones reales.
+\end{itemize}
+
+\subsubsection*{Ficheros \texttt{.def}}
+
+Para que una DLL maliciosa actúe como sustituta de otra es necesario replicar exactamente sus exportaciones. Esto se consigue mediante un fichero \texttt{.def} (Module Definition File), que permite definir explícitamente qué funciones expone la DLL y, opcionalmente, redirigir cada una a otra DLL.
+
+La estructura básica de un fichero \texttt{.def} es:
+
+\begin{verbatim}
+EXPORTS
+FuncB = real-old.FuncB @2
+FuncC = real-old.FuncC @3
+\end{verbatim}
+
+Cada línea indica:
+
+\begin{itemize}
+\item el nombre que exporta la DLL maliciosa,
+\item la función real a la que se redirige,
+\item y el ordinal asociado.
+\end{itemize}
+
+El ordinal debe conservarse porque algunos programas importan funciones por número en lugar de por nombre.
+
+Durante el proyecto se utilizó un script en Python para generar automáticamente estos ficheros \texttt{.def}. El script está disponible en \cite{exports_py}.
+Asimismo, puede encontrarse una demostración completa de \textit{Side Loading} + \textit{DLL Proxying} en \cite{dll_proxy_demo}.
+
+En esa prueba de concepto se crea un ejecutable que importa tres funciones (\texttt{FuncA}, \texttt{FuncB}, \texttt{FuncC}) y una DLL legítima que las implementa. La DLL maliciosa se compila de forma que:
+
+\begin{itemize}
+\item exporta su propia versión de \texttt{FuncA} (donde podría incluirse cualquier lógica ofensiva),
+\item redirige \texttt{FuncB} y \texttt{FuncC} a la DLL real mediante el fichero \texttt{proxy.def}.
+\end{itemize}
+
+Una compilación típica sería:
+
+\begin{verbatim}
+x86_64-w64-mingw32-gcc -shared -o bin/malicious.dll
+dll-malicious.c proxy.def -s
+\end{verbatim}
+
+Para finalizar la demostración, basta con renombrar \texttt{malicious.dll} a \texttt{dll-real.dll} y colocarlo junto al ejecutable vulnerable: en ese momento, \textit{Side Loading} y \textit{DLL Proxying} quedan operativos.
+
+El resultado es similar a un \textit{man-in-the-middle} dentro del propio mecanismo de carga de DLLs: el programa cree estar usando la DLL legítima, pero en realidad está ejecutando código controlado por el atacante mientras conserva su funcionalidad original.
+% -----------------------------------------------------------
+\subsection{Reflective Loading}
+
+Una vez logramos que un proceso legítimo cargue una DLL maliciosa sin alterar su flujo normal, el siguiente paso es introducir la carga ofensiva real. En este escenario, el objetivo es cargar una DLL directamente en el espacio de direcciones del proceso, sin que exista físicamente en disco.
+
+Windows impone una limitación importante: las DLL solo pueden cargarse mediante las APIs estándar (\texttt{LoadLibrary} y derivados), las cuales requieren que el archivo exista en el sistema de ficheros. La técnica de \textit{Reflective Loading} evita esta restricción cargando la DLL íntegramente desde memoria. De este modo, es posible ejecutar código arbitrario sin generar artefactos en disco, reduciendo la exposición a firmas estáticas y detecciones basadas en \textit{file scanning}.
+
+Como referencia, se ha desarrollado una demostración en C que implementa la carga manual de una DLL sin utilizar las funciones estándar del sistema~\cite{walkingloader}. El código puede consultarse en el repositorio mencionado.
+
+\subsubsection*{Proceso de carga reflectiva}
+\label{sec:reflective}
+
+Para implementar \textit{Reflective Loading}, el programa debe llevar a cabo las siguientes etapas:
+
+\begin{enumerate}
+    \item \textbf{Preparar la DLL en memoria.}  
+    El archivo PE de la DLL debe estar ya cargado en memoria, normalmente como un bloque continuo de bytes.
+
+    \item \textbf{Procesar las cabeceras.}  
+    Se interpretan las estructuras PE iniciales para obtener información crítica, incluyendo el tamaño total que ocupará la DLL en memoria (\texttt{IMAGE\_OPTIONAL\_HEADER64.SizeOfImage}).
+
+    \item \textbf{Reservar memoria para la DLL.}  
+    Se solicita al proceso un bloque de memoria con el tamaño indicado por \texttt{SizeOfImage}, donde se cargará la DLL reconstruida.
+
+    \item \textbf{Copiar las cabeceras.}  
+    Las cabeceras del PE se copian al nuevo bloque de memoria, ya que algunas estructuras deberán ser modificadas durante la carga.
+
+    \item \textbf{Mapear las secciones.}  
+    Utilizando \texttt{IMAGE\_FIRST\_SECTION}, se obtiene la dirección del primer \texttt{IMAGE\_SECTION\_HEADER}.  
+    Para cada sección:
+    \begin{itemize}
+        \item Se leen los offsets y tamaños desde el PE en memoria.
+        \item Se copian los datos a la ubicación adecuada dentro del bloque reservado, respetando el RVA definido en las cabeceras.
+    \end{itemize}
+
+    \item \textbf{Resolver la tabla de importaciones.}  
+    La estructura \texttt{IMAGE\_IMPORT\_DESCRIPTOR} define los módulos y funciones requeridos por la DLL.  
+    Para cada módulo importado:
+    \begin{itemize}
+        \item Se comprueba si ya está cargado en el proceso; si no, se carga.
+        \item Se obtiene su \textit{base address}.
+        \item Se recorren las tablas \texttt{PIMAGE\_THUNK\_DATA} para resolver cada función:
+        \begin{itemize}
+            \item El nombre de la función se obtiene de la estructura original.
+            \item Se localiza su dirección en el módulo cargado.
+            \item Se escribe esa dirección en la IAT reconstruida.
+        \end{itemize}
+    \end{itemize}
+    Esto garantiza que, cuando la DLL cargada reflectivamente invoque funciones externas, las llamadas apunten a direcciones válidas.
+
+    \item \textbf{(Opcional) Aplicar relocaciones.}  
+    Si la DLL no se carga en su \texttt{ImageBase} preferido, deben procesarse las entradas de la tabla de relocaciones.  
+    En esta explicación se omite por simplicidad, aunque sería necesario en una implementación completa.
+
+    \item \textbf{Invocar \texttt{DllMain}.}  
+    Con la DLL completamente mapeada en memoria y las dependencias resueltas, solo queda ejecutar:  
+    \texttt{DllMain(baseAddress, DLL\_PROCESS\_ATTACH, NULL);}  
+\end{enumerate}
+
+En este punto, la DLL queda cargada y ejecutándose íntegramente desde memoria, sin intervención de las APIs estándar de Windows y sin necesidad de que exista como archivo en disco.
+
+Esta sección no pretende ofrecer una explicación completamente sistemática de la técnica, sino proporcionar una visión operativa que permita comprender sus fundamentos. Para profundizar en el funcionamiento interno del proceso, se recomienda revisar en el anexo la sección dedicada a los ficheros PE, así como examinar detenidamente el código fuente del repositorio \cite{walkingloader}. En dicha implementación se emplean las estructuras oficiales definidas en \texttt{winnt.h}, por lo que resulta especialmente útil comparar estas estructuras con los offsets y campos especificados en la documentación del formato PE. Para ello, puede consultarse la infografía técnica incluida en \cite{peinfografia}, lo que facilita relacionar las estructuras utilizadas en la implementación con sus equivalentes formales dentro del estándar PE definido por Microsoft.
+
+\section{Syscalls y evasión de EDR}
+
+En este punto del ataque, el implante ya está completamente desplegado: se ejecuta en el sistema comprometido, mantiene comunicación estable con el C2 y está preparado para iniciar técnicas de post-explotación. Antes de avanzar, es imprescindible comprender los mecanismos modernos de detección utilizados por soluciones EDR, especialmente aquellos basados en \textit{hooking} de APIs.
+
+Los EDR actuales instrumentan funciones críticas de \texttt{kernel32.dll}, \texttt{kernelbase.dll} y \texttt{ntdll.dll} mediante \textbf{API hooking}. De este modo, cada vez que el implante invoca funciones como \texttt{CreateProcessW}, \texttt{VirtualAllocEx}, \texttt{NtWriteVirtualMemory} o similares, el EDR intercepta la llamada, analiza los parámetros y decide si permitir, alertar o bloquear la operación.
+
+Para minimizar la superficie de detección, los operadores utilizan diferentes grados de interacción directa con el sistema operativo. Estos niveles pueden organizarse en cuatro categorías progresivas, desde las API de mayor visibilidad hasta técnicas de evasión más avanzadas.
+
+\subsection{Nivel 1 – Win32 API}
+
+\begin{itemize}
+\item Conjunto de funciones de alto nivel diseñadas para desarrollo estándar.
+\item Ejemplos típicos: \texttt{CreateFileW}, \texttt{VirtualAllocEx}, \texttt{WriteProcessMemory}.
+\item Resueltas estática o dinámicamente desde \texttt{kernel32.dll} o \texttt{kernelbase.dll}.
+\item Constituyen el nivel más monitorizado: cualquier EDR comercial detecta su uso de forma prácticamente completa.
+\end{itemize}
+
+\cite{ref:win32api} – Demo de uso Win32 API.  
+
+\subsection{Nivel 2 – Native API}
+
+\begin{itemize}
+\item Funciones de bajo nivel exportadas por \texttt{ntdll.dll}.
+\item Siguen el prefijo \texttt{Nt} o \texttt{Zw}, como \texttt{NtCreateFile} o \texttt{NtAllocateVirtualMemory}.
+\item Representan los \textit{wrappers} oficiales en espacio de usuario que preparan los registros y ejecutan la instrucción \texttt{syscall}.
+\item Aunque ofrecen mayor control, muchos EDR siguen aplicando \textit{hooks} sobre estas funciones críticas.
+\end{itemize}
+
+\cite{ref:nativeapi} – Implementación de Native API para evitar hooks.  
+
+\subsection{Nivel 3 – Direct Syscalls}
+
+\begin{itemize}
+\item Eliminan por completo la dependencia de \texttt{ntdll.dll}.
+\item El operador carga manualmente el \textbf{System Service Number} (SSN) en \texttt{RAX} (x64) o \texttt{EAX} (x86) y ejecuta \texttt{syscall}.
+\item El SSN varía entre versiones y compilaciones de Windows, lo cual requiere enumeración dinámica o bases de datos específicas por build.
+\item Ejemplo habitual para \texttt{NtAllocateVirtualMemory}:
+\begin{lstlisting}[language=C]
+NtAllocateVirtualMemory PROC
+mov r10, rcx
+mov eax, 18h
+syscall
+ret
+NtAllocateVirtualMemory ENDP
+\end{lstlisting}
+\item Los EDR modernos pueden detectar esta técnica comparando el origen de la instrucción \texttt{syscall} mediante ETW/ETW-TI, ya que no proviene de \texttt{ntdll.dll}.
+\end{itemize}
+
+\cite{ref:directsyscalls} – Ejemplo de Direct Syscalls en Windows.  
+
+\subsection{Nivel 4 – Indirect Syscalls}
+
+\begin{itemize}
+\item Variante avanzada de las direct syscalls que reintroduce un retorno controlado hacia \texttt{ntdll.dll}.
+\item El flujo salta a la instrucción original de \texttt{ntdll.dll} inmediatamente después de su propia \texttt{syscall}, preservando la legitimidad aparente del contexto.
+\item Ejemplo simplificado:
+\begin{lstlisting}[language=C]
+EXTERN sysAddrNtAllocateVirtualMemory:QWORD
+
+NtAllocateVirtualMemory PROC
+mov r10, rcx
+mov eax, 18h
+jmp QWORD PTR [sysAddrNtAllocateVirtualMemory]
+NtAllocateVirtualMemory ENDP
+\end{lstlisting}
+\item Desde la perspectiva del EDR (y de ETW), la instrucción \texttt{syscall} parece ejecutarse dentro de \texttt{ntdll.dll}, lo que la vuelve extremadamente difícil de detectar sin medidas basadas en telemetría avanzada o heurísticas de integridad de memoria.
+\end{itemize}
+
+\cite{ref:indirectsyscalls} – Ejemplo de Indirect Syscalls en Windows.
+
+Librerías como HellGate, HaloGate, Freshycalls y SysWhispers3 automatizan la ejecución de direct e indirect syscalls para evadir hooks de EDR en ntdll.dll. Resuelven los SSN y direcciones en tiempo de compilación o carga, generan stubs limpios o reutilizan gadgets legítimos terminados en syscall; ret dentro de secciones no hookeadas de ntdll.dll (técnicas Hell’s Gate, Halo’s Gate y Tartarus’ Gate), permitiendo llamar syscalls sin tocar las funciones exportadas monitorizadas y sin escribir ensamblador manualmente.
+
+Aunque en esta primera versión del ataque no se han empleado \textit{syscalls} directas ni técnicas de \textit{syscall bypass}, entender cómo funcionan los \textit{hooks} en \texttt{ntdll.dll} y las formas de evitarlos es esencial. Estas capacidades son clave para reducir la visibilidad frente a EDR y serán necesarias en futuras versiones del ataque.
+
+\section{Persistencia}
+\label{sec:persistencia}
+
+En un entorno Windows existen múltiples métodos para establecer persistencia tras comprometer un sistema. 
+Entre las técnicas más comunes destacan:
+
+\begin{itemize}
+    \item \textbf{Claves de registro} para ejecutar binarios maliciosos al inicio del sistema o sesión.
+    \item \textbf{Servicios} configurados para iniciarse automáticamente.
+    \item \textbf{Tareas programadas} creadas mediante \texttt{schtasks}.
+    \item \textbf{Elementos del menú \textit{Start-up}} o carpetas de inicio.
+    \item \textbf{DLL Hijacking}, aprovechando ejecutables que cargan librerías sin rutas absolutas; si el binario vulnerable se ejecuta al iniciar el sistema.
+\end{itemize}
+
+Aunque el ecosistema de técnicas de persistencia es amplio, en este ataque se optó por un método sencillo, 
+estable y difícil de detectar a simple vista: la creación de una tarea programada que simula una actualización 
+legítima del software instalado en el equipo. Para ello, se configuró una tarea diaria denominada 
+\texttt{CalibreUpdater}, cuyo propósito aparente es ejecutar un componente de actualización del software 
+Calibre, pero que en realidad invoca el \textit{payload} malicioso.
+
+La tarea fue creada mediante el siguiente comando:
+
+\begin{verbatim}
+schtasks /create ^
+  /tn "CalibreUpdater" ^
+  /tr "%LOCALAPPDATA%\Microsoft\WindowsApps\Calibre2\calibre-debug.exe \
+       -c \"import time; time.sleep(86400)\"" ^
+  /sc daily ^
+  /st 09:00
+\end{verbatim}
+
+
+Este enfoque permite que la persistencia pase desapercibida al camuflarse como una tarea rutinaria de 
+mantenimiento del sistema, lo que reduce la probabilidad de detección durante una inspección superficial.
+
+\section{Infraestructura C2}
+\label{sec:infraestructura}
+
+La infraestructura del atacante se despliega en \textbf{AWS} para mantener aislamiento y control sobre todo el flujo operacional. Se divide en varios servicios independientes con el fin de separar funciones, reducir riesgos y evitar exponer directamente el servidor C2 principal. Sliver, además, incorpora técnicas de \textit{anti-fingerprinting} que dificultan identificar el servidor como infraestructura maliciosa.
+
+Exponer una \textit{reverse shell} a Internet implica riesgos evidentes —interceptación, reutilización de la sesión o identificación del origen—, pero en este caso el sistema que la recibe es desechable, por lo que no se requiere una protección compleja. Aun así, existen alternativas comunes como túneles efímeros o proxys temporales.
+
+La arquitectura se organiza en tres componentes diferenciados:
+
+\begin{itemize}
+    \item \textbf{Servidor de entrega de payloads (CDN):} Aloja los binarios del \textit{stage 2} y actúa como punto inicial de descarga. Su objetivo es evitar que el implante o los artefactos iniciales apunten directamente al C2 real.
+    \item \textbf{Servidor para la reverse shell:} Máquina temporal usada exclusivamente para recibir la sesión interactiva del \textit{stage 1}. Permite al atacante ejecutar comandos básicos y preparar la instalación del implante principal.
+    \item \textbf{Servidor C2 del implante (Sliver):} Nodo dedicado a gestionar la comunicación segura del \textit{stage 2}. Controla tareas, módulos, telemetría y persistencia del implante. Al mantenerse separado del flujo inicial, reduce significativamente la superficie de exposición.
+\end{itemize}
+
+\section{Acciones finales}
+\label{sec:ejecutar-desde-implante}
+
+Una vez que el implante obtiene ejecución en el proceso comprometido, el atacante puede llevar a cabo distintas acciones finales para ejecutar código adicional en memoria. Estas técnicas permiten cargar nuevo payload sin necesidad de escribir artefactos en disco, manteniendo un perfil sigiloso. Entre las opciones más comunes se encuentran:
+
+\subsection{BOF y COFF}
+Los \textit{Beacon Object Files} (BOF) y los \textit{Common Object File Format} (COFF) son archivos \texttt{.obj} generados por el compilador de C pero no vinculados (\textit{unlinked}).  
+Estos objetos pueden ser cargados directamente en memoria por el implante, permitiendo ejecutar código nativo sin necesidad de crear un ejecutable completo.  
+Su formato compacto y la ausencia de dependencias externas los hace ideales para operaciones sigilosas en memoria.
+
+\subsection{Shared Library Side Loading}
+El implante puede cargar bibliotecas dinámicas de forma reflexiva, sin utilizar las funciones estándar del sistema operativo.  
+Este método, similar al empleado en el \textit{stage 2} del ataque, permite mapear la DLL directamente en memoria, resolver sus símbolos manualmente y ejecutar su código sin registrarla en el cargador de Windows.  
+El \textit{side loading} facilita también la suplantación de DLLs legítimas para redirigir el flujo de ejecución hacia código malicioso.
+
+\subsection{Assemblies .NET}
+
+En el contexto de nuestro proyecto, los \textit{assemblies} de \texttt{.NET} constituyen el mecanismo elegido para cargar y ejecutar código adicional dentro del propio implante. Windows inicializa una serie de procesos y servicios críticos para gestionar el sistema operativo, entre ellos el \textit{Common Language Runtime (CLR)} en entornos donde se utilizan aplicaciones \texttt{.NET}. Aprovechar este componente nos permite inyectar y ejecutar código gestionado de forma sigilosa y flexible.
+
+El implante está limitado al uso de \texttt{.NET Framework}, debido a las restricciones propias de Sliver. Es importante distinguirlo de \texttt{.NET Core / .NET 5+}, ya que sus características difieren notablemente:
+
+\begin{itemize}
+    \item \textbf{.NET Framework (v4.x):} Orientado exclusivamente a Windows. No permite compilación cruzada, por lo que los assemblies deben generarse específicamente para esta plataforma. Aunque Windows incluye el CLR, en Sliver el runtime debe ser cargado manualmente por el implante mediante técnicas de \textit{runtime hosting}, permitiendo ejecutar assemblies incluso en procesos que no habían inicializado previamente un entorno gestionado.
+    \item \textbf{.NET Core / .NET 5+:} Multiplataforma y modular. A diferencia del Framework clásico, el payload puede **transportar su propio runtime**, permitiendo la ejecución sin depender de componentes instalados en el sistema objetivo. Está diseñado para entornos modernos y despliegues autocontenidos.
+\end{itemize}
+
+Un \textit{assembly} \texttt{.NET} es esencialmente un contenedor que agrupa código compilado en \textbf{Intermediate Language (IL)}, un bytecode similar conceptualmente al de Java. Este IL no se ejecuta directamente, sino que es interpretado y gestionado por el \textit{Common Language Runtime}. Esto implica que cuando compilamos un proyecto en C\# no obtenemos código máquina, sino un lenguaje intermedio que será ejecutado por el CLR del \texttt{.NET Framework}.
+
+En términos operativos, el implante es capaz de:
+
+\begin{itemize}
+\item Ejecutar un assembly \textbf{in-process}, cargando el CLR dentro del proceso actual e invocando directamente el código gestionado.
+\item Ejecutarlo en un \textbf{proceso sacrificado}, inicializando el runtime en un proceso externo para reducir la huella y aislar la ejecución.
+\end{itemize}
+
+Esto nos permite escribir código directamente en C\# que será ejecutado en memoria, de forma muy similar al comportamiento de un shellcode, pero aprovechando la potencia y abstracción del ecosistema \texttt{.NET}. La técnica destaca por su flexibilidad, capacidad de integración con APIs de alto nivel y mínima fricción durante la carga del payload.
+
+No obstante, esta aproximación no está exenta de riesgos de detección. Un sistema que monitorice la aparición del runtime de \texttt{.NET} en procesos donde normalmente no debería estar presente puede identificar esta anomalía, revelando la actividad del implante. Por ello, resulta relevante considerar medidas de evasión complementarias cuando se emplea este enfoque.

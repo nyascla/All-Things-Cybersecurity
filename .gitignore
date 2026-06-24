@@ -16,7 +16,6 @@ venv
 
 # Latex
 latex/main*
-latex/main*
 !latex/main.tex 
 
 # VS Code

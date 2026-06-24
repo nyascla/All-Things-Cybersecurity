@@ -1,4 +1,4 @@
-\section{Portable Executable (PE)}
+\subsection{Portable Executable (PE)}
 
 El formato \textit{Portable Executable} (PE) es el estándar de Windows para almacenar ejecutables, bibliotecas dinámicas (\textit{DLLs}) y otros tipos de archivos que pueden ser cargados y ejecutados por el sistema operativo.  
 Es el equivalente funcional del formato ELF en Linux y proporciona toda la información necesaria para que el cargador de Windows gestione la ejecución de un programa: estructura de secciones, tablas de importación y exportación, encabezados, y metadatos de la aplicación.  
@@ -9,7 +9,7 @@ Los PE file es un fichero con valores hexadecimales dispuestos en un layout espe
 Un archivo PE (\textit{Portable Executable}) es un fichero binario cuyos valores están organizados en un diseño específico que permite recorrerlo y analizarlo de manera estructurada.  
 La disposición de los encabezados, secciones y demás campos, incluyendo los offsets estándar de cada componente, se ilustra detalladamente en la infografía disponible en \cite{peinfografia}.
 
-\subsection{Headers}
+\subsubsection{Headers}
 
 En el offset \texttt{0x00} se encuentran los encabezados del PE, que contienen información general sobre el ejecutable y permiten al sistema operativo interpretar correctamente el archivo. Entre los campos más relevantes se incluyen:
 
@@ -24,14 +24,14 @@ Estos campos permiten al sistema operativo localizar las distintas secciones del
 
 Implementación en C para iterar y recuperar los campos de los encabezados de un archivo PE~\cite{walking_PE_headers}.
 
-\subsection{Headers Tables}
+\subsubsection{Headers Tables}
 
 Las cabeceras de un archivo PE contienen varias tablas que son fundamentales para la correcta creación y carga de un proceso a partir de un ejecutable.  
 Estas tablas, que incluyen información sobre exportaciones, importaciones y relocaciones, se encuentran referenciadas en el arreglo \textit{Data Directory} del encabezado opcional del PE.
 
 Para ver cómo recorrer un PE y acceder a cada una de estas tablas, se incluyen ejemplos de código en C en los repositorios de GitHub correspondientes, los cuales se adjuntan en cada sección específica.
 
-\subsubsection{Exports}
+\paragraph{Exports}
 
 Si el archivo PE corresponde a una biblioteca compartida (\textit{DLL}) y exporta funcionalidad, 
 esta información se almacena en la tabla de exportaciones.  
@@ -50,7 +50,7 @@ donde se recorre manualmente la tabla de exportaciones del módulo cargado en me
 la dirección real de una función exportada~\cite{x64_get_proc}, así como su versión 
 equivalente para arquitecturas x86~\cite{x86_get_proc}.
 
-\subsubsection{Imports}
+\paragraph{Imports}
 
 La tabla de importaciones es fundamental para el \textit{Windows Loader}, ya que contiene información sobre todas las dependencias externas que un ejecutable requiere. Durante la carga del proceso, el loader consulta esta tabla para determinar qué DLLs deben cargarse en memoria y, una vez cargadas, registra las direcciones de memoria de las funciones importadas.
 
@@ -60,7 +60,7 @@ Se proporciona una implementación en C para recorrer la tabla de importaciones 
 
 Además, se incluye una implementación propia de un \textit{Windows Loader} simplificado para cargar una DLL, en la que puede observarse explícitamente el proceso de parcheo de la \textit{Import Address Table} (IAT) durante la resolución de dependencias~\cite{walkingloader}.
 
-\subsubsection{Relocations}
+\paragraph{Relocations}
 
 La tabla de \textit{relocations} es fundamental cuando está habilitado el \texttt{ASLR} (Address Space Layout Randomization).  
 Si el ejecutable no puede cargarse en su \textit{ImageBase} preferido, el \textit{Windows Loader} debe reubicarlo en una dirección distinta. Para ello, aplica un \textit{delta} de reubicación calculado como:
@@ -102,7 +102,7 @@ En conjunto, la tabla de relocaciones actúa como un “mapa de parches” gener
 
 Ejemplo de código para iterar la tabla de relocaciones de un PE y analizar los desplazamientos aplicables a las direcciones del ejecutable~\cite{walking_PE_relocs}.
 
-\subsection{Sections}
+\subsubsection{Sections}
 
 En términos de funcionalidad, las secciones del PE son equivalentes a los segmentos de un archivo ELF en Linux.
 
@@ -117,7 +117,7 @@ En el siguiente código se muestra cómo recorrer las secciones de un archivo PE
 En la implementación propia de un \textit{Windows Loader} simplificado~\cite{walkingloader}, también se muestra cómo, desde C, se pueden iterar las secciones del PE, reservar la memoria correspondiente, mapearlas adecuadamente y aplicar los parcheos necesarios.
 
 
-\subsection{Ejemplo práctico: parcheo de un PE y modificación del Entry Point}
+\subsubsection{Ejemplo práctico: parcheo de un PE y modificación del Entry Point}
 
 Como cierre a esta sección, se presenta un ejemplo práctico que ilustra cómo modificar un archivo PE para alterar su flujo de ejecución durante la carga. En este proyecto se incluye un script en Python que automatiza el proceso de parcheo de un binario arbitrario, incorporando un \textit{shellcode} desarrollado específicamente para esta prueba. Dicho \textit{shellcode} muestra una ventana mediante la función \texttt{MessageBoxA} antes de que el programa continúe ejecutándose con normalidad.
 

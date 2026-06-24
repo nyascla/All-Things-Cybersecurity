@@ -1,0 +1,72 @@
+\chapter{Metodología}
+\label{chap:metodologia}
+
+\section{Enunciado}
+
+Este recurso está diseñado para servir como material práctico de entrenamiento para analistas de seguridad. A continuación se presenta una breve descripción de la infraestructura de la organización víctima, junto con un enlace al conjunto completo de artefactos recopilados durante el incidente.
+
+El objetivo del analista es reconstruir la historia completa del ataque a partir de dichos artefactos. Para facilitar este proceso, el trabajo se organiza en dos capítulos principales: en el capítulo \textit{El Incidente} \ref{chap:incidente} se detalla de forma minuciosa cada acción realizada por el atacante, sus objetivos, las técnicas MITRE ATT\&CK asociadas y los artefactos donde pueden encontrarse evidencias; por otra parte, el capítulo \textit{Red Team Notes} \ref{chap:red-team} ofrece una visión desde la perspectiva del atacante, explicando los procedimientos empleados para ejecutar el ataque.
+
+\subsection*{Infraestructura de la víctima}
+
+Como base del entorno corporativo se emplea \textbf{GOAD-Light}, una versión reducida del laboratorio GOAD orientada a entornos de Active Directory vulnerables. Este entorno proporciona un dominio Windows preconfigurado, servicios esenciales y múltiples debilidades que permiten simular técnicas reales de compromiso y movimiento lateral.  
+
+Las características completas del entorno GOAD-Light están documentadas por sus autores \cite{goad-light}.
+
+Dentro del dominio se integra una \textbf{workstation Windows 11}, actualizada y con todas las protecciones nativas habilitadas. Esta máquina actúa como punto de entrada inicial del ataque y como elemento de interacción principal del usuario víctima.
+
+Para maximizar la visibilidad durante el análisis forense y aumentar el volumen de artefactos disponibles, se incorporan dos componentes adicionales:
+
+\begin{itemize}
+    \item \textbf{Suricata}: desplegada para la monitorización y captura del tráfico de red, permitiendo correlacionar actividad sospechosa, conexiones salientes y patrones asociados al \textit{command and control}.
+    \item \textbf{Sysmon}: configurado en la workstation para generar telemetría enriquecida de eventos de Windows (creación de procesos, carga de DLLs, conexiones de red, modificaciones en el registro, entre otros), facilitando la reconstrucción temporal y contextual del ataque.
+\end{itemize}
+
+\subsection{Recopilación de evidencias}
+
+En el siguiente enlace se encuentran todas las evidencias recopiladas del incidente:
+
+\begin{center}
+\href{https://drive.google.com/drive/folders/18eekh9kx51psuuTZ_nHl3NHEQLJb7zRV?usp=drive_link}{\textbf{Carpeta de evidencias del incidente}}
+\end{center}
+
+Cada carpeta corresponde a un equipo de la organización y lleva su nombre. Dentro de cada una se incluyen todos los artefactos adquiridos.
+
+Los artefactos consisten en un volcado de la memoria RAM del equipo y otros elementos relevantes obtenidos durante la adquisición.
+
+La recopilación se ha realizado con la herramienta \textbf{KAPE}, utilizando archivos \texttt{.tkape}. Estos archivos definen qué artefactos se recolectan, desde qué rutas y con qué reglas. Una explicación detallada sobre qué es un Target de KAPE puede consultarse en \cite{kape-targets}.
+
+En este caso, se han utilizado los siguientes Targets:
+
+\begin{itemize}
+    \item \texttt{\string!SANS\_Triage} \cite{sans_triage_kape}
+    \item \texttt{EventLogs} \cite{eventlogs_kape}
+\end{itemize}
+
+\subsection{Cómo utilizar este recurso}
+
+Este recurso está pensado para servir como guía de apoyo durante el análisis del incidente y como material de referencia técnica para comprender en detalle cómo se desarrolló el ataque.
+
+El contenido se organiza en dos bloques complementarios:
+
+\begin{itemize}
+    \item \textbf{Capítulo \ref{chap:marco-teorico}: Marco Teórico.}  
+    Vocabulario técnico e instituciones sobre las que se apoya el contenido del trabajo.
+
+    \item \textbf{Capítulo \ref{chap:incidente}: Reconstrucción del ciberataque.}  
+    Presenta una visión estructurada del ataque, mapeando cada acción del adversario con las técnicas MITRE ATT\&CK aplicadas y con los artefactos del sistema víctima donde podría encontrarse evidencia relevante. Este bloque está orientado a facilitar el trabajo del analista DFIR durante el proceso de correlación y reconstrucción de los hechos.
+
+    \item \textbf{Capítulo \ref{chap:red-team}: Red Team Notes.}  
+    Describe el ataque desde el punto de vista del adversario, explicando el razonamiento, las decisiones técnicas y los procedimientos utilizados en cada fase. Ofrece una visión interna del flujo del ataque y del funcionamiento de cada componente ofensivo.
+\end{itemize}
+
+El proyecto está diseñado para que el analista pueda avanzar de forma autónoma utilizando únicamente las evidencias del caso. Si en algún momento necesita orientación sobre dónde buscar rastros de una técnica, puede consultar el Capítulo \ref{chap:incidente}. Si, en cambio, desea entender en profundidad por qué el atacante actuó de una determinada manera o cómo funciona una técnica concreta, puede acudir al Capítulo \ref{chap:red-team}, donde se detalla su implementación desde la perspectiva del red team.
+
+\begin{center}
+\fbox{
+    \begin{minipage}{0.75\textwidth}
+        \centering
+        \textbf{Si deseas analizar el caso sin spoilers, no continúes leyendo.}
+    \end{minipage}
+}
+\end{center}
