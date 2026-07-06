@@ -26,7 +26,7 @@ En determinados escenarios, AMSI puede detectar intentos de manipulación direct
 El segundo método utilizado fue el \textit{AMSI Bypass – Memory Patching via Reflection}. Durante la inicialización de PowerShell, la clase privada \\ \texttt{System.Management.Automation.AmsiUtils} crea una variable estática denominada \texttt{amsiInitFailed}. Si este valor se establece en \texttt{true}, AMSI considera que su inicialización ha fallado y desactiva de forma global todos los análisis para el resto de la sesión, independientemente de que \texttt{amsi.dll} continúe cargada y operativa. Este enfoque resulta especialmente útil en entornos donde el parcheo directo del buffer es detectado y bloqueado. \textit{AMSI Bypass - Memory Patching via Reflection: \cite{amsi-bypass-reflection}}
 
 
-\section{Programar shellcodes}
+\section{Programar shellcodes} \label{sec:shellcodes}
 \label{sec:shellcode}
 
 Un shellcode es una secuencia de instrucciones ensambladas en formato position-independent, capaz de ejecutarse en cualquier ubicación de memoria sin asumir un punto de entrada fijo. Esto permite que, independientemente de dónde sea cargado el bloque de código, su ejecución produzca un comportamiento controlado y determinista, característica esencial en escenarios de explotación y ejecución arbitraria.
@@ -129,7 +129,7 @@ Para generar este PE se ha utilizado la herramienta \texttt{sclauncher} \cite{sc
 \item \textbf{Reverse shell x86 (payload final utilizado en el ataque):} \cite{github-reverseshell-x86}
 \end{itemize}
 
-\section{Inyección de código}
+\section{Inyección de código} \label{sec:inyeccion}
 
 La inyección de código consiste en conseguir que un proceso ejecute instrucciones distintas a las previstas originalmente. Existen múltiples técnicas para lograrlo, pero todas se basan en un principio común: modificar el flujo de ejecución o incorporar código arbitrario dentro del espacio de memoria de un proceso legítimo.
 
@@ -169,7 +169,7 @@ Session Manager\KnownDLLs
 
 solo pueden cargarse desde \texttt{System32}, lo que imposibilita su secuestro mediante \textit{DLL Hijacking} tradicional.
 
-\section{Weaponización de DLL Hijacking}
+\section{Weaponización de DLL Hijacking} \label{sec:weaponizacion-dll}
 \label{sec:dll-hijacking}
 
 Para transformar este mecanismo en una técnica ofensiva se emplean tres enfoques complementarios: \textit{Side Loading}, \textit{DLL Proxying} y \textit{Reflective Loading}.
@@ -315,7 +315,7 @@ En este punto, la DLL queda cargada y ejecutándose íntegramente desde memoria,
 
 Esta sección no pretende ofrecer una explicación completamente sistemática de la técnica, sino proporcionar una visión operativa que permita comprender sus fundamentos. Para profundizar en el funcionamiento interno del proceso, se recomienda revisar en el anexo la sección dedicada a los ficheros PE, así como examinar detenidamente el código fuente del repositorio \cite{walkingloader}. En dicha implementación se emplean las estructuras oficiales definidas en \texttt{winnt.h}, por lo que resulta especialmente útil comparar estas estructuras con los offsets y campos especificados en la documentación del formato PE. Para ello, puede consultarse la infografía técnica incluida en \cite{peinfografia}, lo que facilita relacionar las estructuras utilizadas en la implementación con sus equivalentes formales dentro del estándar PE definido por Microsoft.
 
-\section{Syscalls y evasión de EDR}
+\section{Syscalls y evasión de EDR} \label{sec:syscalls}
 
 En este punto del ataque, el implante ya está completamente desplegado: se ejecuta en el sistema comprometido, mantiene comunicación estable con el C2 y está preparado para iniciar técnicas de post-explotación. Antes de avanzar, es imprescindible comprender los mecanismos modernos de detección utilizados por soluciones EDR, especialmente aquellos basados en \textit{hooking} de APIs.
 
@@ -389,8 +389,7 @@ Librerías como HellGate, HaloGate, Freshycalls y SysWhispers3 automatizan la ej
 
 Aunque en esta primera versión del ataque no se han empleado \textit{syscalls} directas ni técnicas de \textit{syscall bypass}, entender cómo funcionan los \textit{hooks} en \texttt{ntdll.dll} y las formas de evitarlos es esencial. Estas capacidades son clave para reducir la visibilidad frente a EDR y serán necesarias en futuras versiones del ataque.
 
-\section{Persistencia}
-\label{sec:persistencia}
+\section{Persistencia} \label{sec:persistencia}
 
 En un entorno Windows existen múltiples métodos para establecer persistencia tras comprometer un sistema. 
 Entre las técnicas más comunes destacan:
@@ -424,7 +423,7 @@ schtasks /create ^
 Este enfoque permite que la persistencia pase desapercibida al camuflarse como una tarea rutinaria de 
 mantenimiento del sistema, lo que reduce la probabilidad de detección durante una inspección superficial.
 
-\section{Infraestructura C2}
+\section{Infraestructura C2} \label{sec:c2}
 \label{sec:infraestructura}
 
 La infraestructura del atacante se despliega en \textbf{AWS} para mantener aislamiento y control sobre todo el flujo operacional. Se divide en varios servicios independientes con el fin de separar funciones, reducir riesgos y evitar exponer directamente el servidor C2 principal. Sliver, además, incorpora técnicas de \textit{anti-fingerprinting} que dificultan identificar el servidor como infraestructura maliciosa.
@@ -439,7 +438,7 @@ La arquitectura se organiza en tres componentes diferenciados:
     \item \textbf{Servidor C2 del implante (Sliver):} Nodo dedicado a gestionar la comunicación segura del \textit{stage 2}. Controla tareas, módulos, telemetría y persistencia del implante. Al mantenerse separado del flujo inicial, reduce significativamente la superficie de exposición.
 \end{itemize}
 
-\section{Acciones finales}
+\section{Acciones finales} \label{sec:acciones-finales}
 \label{sec:ejecutar-desde-implante}
 
 Una vez que el implante obtiene ejecución en el proceso comprometido, el atacante puede llevar a cabo distintas acciones finales para ejecutar código adicional en memoria. Estas técnicas permiten cargar nuevo payload sin necesidad de escribir artefactos en disco, manteniendo un perfil sigiloso. Entre las opciones más comunes se encuentran:
