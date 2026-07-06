@@ -1,7 +1,14 @@
-\section{Procesos Windows}
+\subsection{Procesos Windows}
 
-Un proceso en Windows representa una entidad de ejecución que actúa como contenedor de los recursos necesarios para que uno o varios hilos puedan ejecutarse. Desde el punto de vista del sistema operativo, un proceso no ejecuta código por sí mismo, sino que proporciona el contexto y los recursos que los hilos utilizan.  
-A continuación se describen sus componentes principales:
+Tras comprender el modelo de memoria virtual, el siguiente paso es analizar cómo se organiza la ejecución de las aplicaciones sobre ese espacio de direcciones. En Windows, esta organización se materializa en la abstracción de \textbf{proceso}, que actúa como la unidad básica de ejecución y como contenedor de todos los recursos asociados a un programa en ejecución.
+
+La relación con la memoria virtual es directa: cada proceso dispone de su propio espacio de direcciones aislado, definido por el sistema operativo mediante mecanismos de paginación y control de permisos. Este aislamiento no solo protege la memoria entre procesos, sino que también condiciona cómo se estructuran y gestionan los recursos de ejecución.
+
+Un proceso en Windows no ejecuta instrucciones por sí mismo, sino que proporciona el contexto necesario para que uno o varios hilos puedan hacerlo. Este contexto incluye, entre otros elementos, el espacio de direcciones virtual, los recursos del sistema asignados y la información necesaria para coordinar la ejecución.
+
+En este apartado se describen los componentes principales de un proceso en Windows, con el objetivo de entender cómo se materializa la abstracción introducida por la memoria virtual en la ejecución real de las aplicaciones y cómo esta estructura es fundamental tanto para el funcionamiento del sistema como para el análisis de comportamiento en escenarios de seguridad.
+
+A continuación se describen los principales componentes internos de un proceso en Windows, tanto desde la perspectiva del kernel como del espacio de usuario, con el objetivo de entender cómo se materializa esta abstracción en la arquitectura del sistema operativo.
 
 \begin{itemize}
     \item \textbf{EPROCESS:}  
@@ -23,7 +30,9 @@ A continuación se describen sus componentes principales:
 
 \subsection{Creación de un proceso (Kernel)}
 
-La creación de un proceso en Windows sigue una secuencia estricta de pasos a nivel del kernel.
+La creación de un proceso en Windows es un procedimiento complejo que se realiza íntegramente a nivel del kernel y sigue una secuencia bien definida de inicialización y configuración de estructuras internas. En este proceso se establecen todos los elementos necesarios para que el sistema operativo pueda gestionar su ejecución, incluyendo su espacio de direcciones virtual, sus estructuras de control y los recursos asociados.
+
+Para una explicación detallada y rigurosa de este mecanismo, se recomienda la exposición de Duncan Ogilvie, donde se describe de forma clara y precisa el flujo interno mediante el cual Windows inicializa y pone en ejecución un nuevo proceso \cite{ogilvie_windows_internals_crash_course}.
 
 \subsubsection*{(1) Inicialización del espacio de direcciones}
 
@@ -158,7 +167,7 @@ El espacio de direcciones de un proceso en memoria se organiza en varias seccion
 
 \end{description}
 
-\section{Genealogía de Procesos en Windows}
+\subsection{Genealogía de Procesos en Windows}
 
 Al iniciar, Windows lanza una serie de procesos fundamentales para gestionar todo el sistema operativo, desde la administración de recursos y servicios hasta la interacción con el usuario. Estos procesos forman una jerarquía, donde cada nuevo proceso puede generar otros procesos hijos según las necesidades del sistema o del usuario.
 

@@ -41,14 +41,18 @@ Esta información, estructurada mediante MITRE ATT\&CK y contextualizada a trav�
 
 \section{Windows Internals}
 
-\input{annexe_windows_internals/annex-virutual-memory.tex}
+El desarrollo y análisis de malware moderno está estrechamente vinculado al funcionamiento interno del sistema operativo. Comprender cómo Windows gestiona procesos, memoria, objetos del kernel y llamadas al sistema es fundamental, ya que constituye la base tanto de las técnicas ofensivas como defensivas. Los atacantes aprovechan estos mecanismos para ejecutar código de forma encubierta, mantener persistencia o evadir la detección, mientras que los analistas los utilizan para interpretar los rastros que dejan estas técnicas en el sistema.
+
+Esta sección presenta los conceptos clave de la arquitectura interna de Windows relevantes para el análisis desarrollado en este trabajo y está pensada como material de referencia. Su objetivo es servir de apoyo a las explicaciones más técnicas que aparecen posteriormente, especialmente para lectores que puedan carecer de una base teórica sólida en sistemas operativos o internals de Windows.
+
+\input{chapters/windows_internals/annex-virutual-memory.tex}
 \newpage
-\input{annexe_windows_internals/annex-pe-files.tex}
+\input{chapters/windows_internals/annex-process.tex}
 \newpage
-\input{annexe_windows_internals/annex-process.tex}
+\input{chapters/windows_internals/annex-pe-files.tex}
 \newpage
-\input{annexe_windows_internals/annex-dynamic-link-library.tex}
+\input{chapters/windows_internals/annex-dynamic-link-library.tex}
 \newpage
-\input{annexe_windows_internals/annex-threads.tex}
+\input{chapters/windows_internals/annex-threads.tex}
 \newpage
-\input{annexe_windows_internals/annex-ring-levels.tex}
+\input{chapters/windows_internals/annex-ring-levels.tex}

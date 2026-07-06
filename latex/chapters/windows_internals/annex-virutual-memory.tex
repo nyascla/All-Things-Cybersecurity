@@ -1,27 +1,38 @@
-\section{Memoria Virtual}
+\subsection{Memoria Virtual}
 
-La memoria virtual es uno de los pilares del diseño moderno de Windows y constituye un concepto clave para entender cómo se ejecutan y aíslan los procesos en el sistema operativo. Este mecanismo permite que cada proceso disponga de su propio espacio de direcciones lógico, independiente del resto, lo que facilita la protección, la gestión eficiente de recursos y la estabilidad del sistema.
+Esta sección se incluye con el objetivo de establecer los fundamentos necesarios para comprender la gestión de memoria en Windows, un componente esencial tanto en la ejecución legítima de procesos como en la implementación de técnicas utilizadas en el análisis de malware. El punto de partida de esta abstracción es la memoria virtual, un mecanismo que surge como respuesta a las limitaciones inherentes de la memoria física, especialmente la escasez de recursos, la fragmentación y los problemas de seguridad derivados del acceso directo entre procesos.
+
+La memoria virtual permite que cada proceso disponga de un espacio de direcciones propio, continuo y aislado, independientemente de la disposición real de la memoria física. Esto no solo simplifica el modelo de programación, sino que también mejora la seguridad y la estabilidad del sistema, al evitar que un proceso pueda interferir directamente en la memoria de otro. Sin este mecanismo, los sistemas operativos modernos se enfrentarían a serias limitaciones en términos de escalabilidad, aislamiento y control de acceso.
+
+En este contexto, comprender cómo se implementa la memoria virtual mediante paginación, tablas de páginas y la intervención de la MMU resulta fundamental. Estos mecanismos no solo determinan cómo se traduce una dirección virtual a una dirección física, sino que también condicionan directamente cómo se ejecutan los procesos y cómo pueden ser explotados o analizados en escenarios de seguridad.
+
+Por ello, antes de abordar técnicas más avanzadas, resulta imprescindible describir estos conceptos básicos de la arquitectura de memoria, ya que proporcionan el contexto necesario para entender los escenarios y mecanismos que se analizan a lo largo del trabajo.
 
 Las infografías presentadas en esta sección se han extraído de \cite{memoria_virtual_paging}.
 
-\subsection{Problemas Memoria Fisica}
-\begin{itemize}
-    \item Escasez de memoria
-    \item Fragmentación
-    \item Acceso a memoria (Seguridad)
-\end{itemize}
+\subsubsection{Problemas Memoria Fisica}
+
+El uso directo de memoria física en un sistema operativo presenta tres problemas fundamentales que justifican la existencia de la memoria virtual.
+
+En primer lugar, la \textbf{escasez de memoria} obliga a compartir un recurso limitado entre múltiples procesos, lo que dificulta su asignación eficiente. En segundo lugar, la \textbf{fragmentación} impide aprovechar de forma continua la memoria disponible, ya que los bloques libres no siempre se encuentran contiguos.
+
+El problema más crítico es el \textbf{acceso directo a memoria}, ya que sin una capa de abstracción cualquier proceso podría leer o modificar la memoria de otro proceso o incluso del kernel, comprometiendo la seguridad y estabilidad del sistema.
+
+La memoria virtual soluciona estos problemas al introducir espacios de direcciones independientes por proceso y un sistema de \textbf{permisos por página}, que define si cada región de memoria puede ser leída, escrita o ejecutada. Esto permite no solo gestionar mejor los recursos, sino también garantizar el aislamiento y la protección entre procesos.
 
 \subsection{Acceso indirecto a memoria}
 
-Cada proceso tiene su propio espacio de direcciones virtual, 
-Para el proceso es como tener un espacio de momoria fisica contiguo reservado,
-Pero por detras el SO esta mapeando esas direcciones virtuales a distintas regiones de memoria fisica.
+La memoria virtual introduce una capa de abstracción entre los procesos y la memoria física. Cada proceso dispone de un espacio de direcciones virtual propio, independiente del resto, lo que le da la ilusión de contar con un bloque de memoria continuo y exclusivo. Sin embargo, estas direcciones no corresponden directamente a memoria física, sino que son traducidas dinámicamente por el sistema operativo.
+
+Esta traducción permite resolver simultáneamente los problemas de escasez y fragmentación, ya que la memoria física puede asignarse de forma no contigua y reutilizarse de manera más eficiente. Además, el aislamiento entre espacios de direcciones impide que un proceso acceda directamente a la memoria de otro, mejorando la seguridad del sistema.
 
 \subsection{Paginación}
 
-Mapear cada byte de la memoria virtual directamente a un byte de la memoria física sería un proceso extremadamente ineficiente. Para optimizar este mecanismo, Windows —como la mayoría de sistemas operativos modernos— utiliza un esquema de paginación. En este modelo, la memoria virtual se divide en bloques llamados \textit{pages}, mientras que la memoria física se organiza en bloques del mismo tamaño denominados \textit{frames}. El tamaño habitual de una página es de 4\,KB (4096 bytes), aunque pueden existir tamaños mayores en configuraciones específicas.
+Para hacer viable este modelo, la memoria virtual no se gestiona a nivel de bytes individuales, ya que esto sería ineficiente en términos de espacio y rendimiento. En su lugar, Windows utiliza un esquema de \textbf{paginación}, donde la memoria se divide en bloques de tamaño fijo llamados \textit{pages}, mientras que la memoria física se organiza en \textit{frames} del mismo tamaño (habitualmente 4,KB).
 
-Cuando un proceso se ejecuta, sus páginas virtuales se asocian a \textit{frames} disponibles en la memoria física. Este sistema permite una gestión más flexible, eficiente y segura de la memoria, facilitando además mecanismos como la protección de páginas, la paginación a disco y el aislamiento entre procesos.
+La asignación no se realiza de forma contigua, sino que cada página virtual puede mapearse a cualquier frame disponible en memoria física. Esto elimina el problema de la fragmentación externa y permite reutilizar la memoria de forma flexible.
+
+Además, cada página incluye metadatos de protección que definen sus permisos de acceso (lectura, escritura y ejecución), lo que refuerza el aislamiento entre procesos y permite al sistema operativo controlar de forma precisa cómo se utiliza la memoria en cada caso.
 
 \subsection{Tabla de páginas}
 
@@ -51,11 +62,11 @@ En resumen, las tablas de páginas multinivel combinan eficiencia y flexibilidad
 
 
 
-\subsection{Memory Management Unit (MMU)}
+\subsubsection{Memory Management Unit (MMU)}
 
 Sin mecanismos adicionales, la CPU tendría que acceder a la RAM dos veces por cada operación de lectura o escritura: primero para consultar la tabla de páginas y después para acceder a la dirección física resultante. Para evitar este coste, la \textit{Memory Management Unit} (MMU), un componente de hardware integrado en la CPU, se encarga de realizar la traducción de direcciones virtuales a físicas. La MMU mantiene una caché de entradas recientes de la tabla de páginas llamada \textit{Translation Lookaside Buffer} (TLB), que reduce drásticamente el número de accesos a memoria. Además, la MMU aplica los permisos definidos para cada página, garantizando que un proceso no pueda acceder a regiones de memoria que no le pertenecen.
 
-\subsection{Acceso a memoria}
+\subsubsection{Acceso a memoria}
 
 Cuando un proceso accede a una dirección virtual, la CPU delega en la MMU la traducción de esa dirección a su ubicación física. Para ello, la MMU divide la dirección virtual en dos partes: el \textit{page number}, formado por los bits más significativos, y el \textit{page offset}, compuesto por los bits menos significativos. El \textit{page number} identifica qué página virtual se está usando, mientras que el \textit{offset} indica la posición exacta dentro de esa página.
 
