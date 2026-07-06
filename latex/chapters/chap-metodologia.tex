@@ -7,7 +7,11 @@ En esta sección, previa a la implementación, se describe el escenario diseñad
 
 El objetivo principal de este entorno es servir como material práctico de entrenamiento para analistas de seguridad, permitiendo la reconstrucción de un incidente realista a partir de un conjunto controlado de artefactos. Para ello, se define la infraestructura de la organización víctima y se pone a disposición el conjunto completo de evidencias generadas durante la simulación del incidente.
 
-El propósito del analista es reconstruir la cadena completa del ataque mediante el análisis de dichos artefactos, identificando las técnicas empleadas y correlacionando la información disponible. Para estructurar este proceso, el trabajo se organiza en dos subsecciones complementarias:
+El propósito del analista es reconstruir la cadena completa del ataque mediante el análisis de dichos artefactos, identificando las técnicas empleadas, correlacionando la información disponible y comprendiendo la evolución del compromiso desde el acceso inicial hasta el establecimiento de la persistencia y el control del sistema.
+
+Desde una perspectiva general, la simulación se ha diseñado como un escenario de alta complejidad técnica, con el objetivo de reproducir un entorno lo más cercano posible a un incidente real. Esto permite que el trabajo no se limite a un único vector de ataque, sino que integre múltiples fases del ciclo de intrusión, incrementando el valor formativo del ejercicio y la dificultad del análisis forense.
+
+Para estructurar este proceso, el trabajo se organiza en dos subsecciones complementarias:
 
 \subsection{El Incidente \ref{chap:incidente}}
 En este capítulo se describe de forma secuencial la actividad del atacante, incluyendo sus objetivos, las técnicas MITRE ATT\&CK asociadas y las evidencias donde pueden observarse.
@@ -19,7 +23,7 @@ Este capítulo ofrece una visión complementaria desde la perspectiva del atacan
 
 En este trabajo no se modela un adversario real ni se replica el comportamiento de un APT existente. En su lugar, se diseña un atacante ad hoc, construido específicamente para este escenario con fines didácticos. Este enfoque permite ajustar de forma controlada sus tácticas, técnicas y decisiones operativas para alinearlas con los objetivos formativos del ejercicio.
 
-\section{Descripción del Ataque (Resumen Ejecutivo)}
+\subsection{Descripción del Ataque (Resumen Ejecutivo)}
 
 \begin{figure}[h!]
     \centering
@@ -33,6 +37,22 @@ El escenario propuesto reproduce un ataque estructurado en dos fases, diseñado 
 En la primera fase, el atacante obtiene acceso inicial al sistema víctima mediante el uso de un dispositivo físico que le permite ejecutar código de forma inmediata. A partir de este punto de entrada, establece una conexión remota hacia su infraestructura externa, desde la cual realiza un reconocimiento básico del sistema y prepara la siguiente etapa del ataque.
 
 En la segunda fase, el adversario despliega su componente principal, diseñado para operar de forma persistente y con baja visibilidad dentro del sistema. Este componente establece mecanismos de persistencia, amplía las capacidades de control remoto y se integra en procesos legítimos del sistema con el objetivo de dificultar su detección. A partir de este momento, el atacante puede realizar acciones más avanzadas, como el análisis del entorno, la escalada de privilegios, el movimiento lateral o la exfiltración de información.
+
+\section{Descripción técnica de la simulación}
+
+A nivel técnico, el incidente simulado se estructura en dos fases diferenciadas que reflejan la progresión del compromiso y la complejidad creciente del ataque.
+
+\textbf{Fase 1: acceso inicial y establecimiento de acceso remoto.}  
+La primera fase comprende la intrusión inicial en el sistema. El acceso se realiza mediante un dispositivo \textit{BadUSB}, seguido de la evasión de mecanismos de protección mediante un \textit{AMSI Bypass} basado en \textit{Memory Patching via Reflection}. Como resultado de esta fase, se consigue establecer una \textit{Reverse Shell} implementada en ensamblador (\textit{ASM}), que proporciona control remoto básico sobre el sistema comprometido.
+
+\textbf{Fase 2: ejecución avanzada, evasión y persistencia en memoria.}  
+A partir de la \textit{Reverse Shell} obtenida en la fase anterior, se desarrolla la segunda fase del ataque, centrada en técnicas avanzadas de ejecución en memoria, evasión y persistencia. En esta etapa se emplea \textit{DLL Hijacking} como técnica principal de weaponización, combinando \textit{Side Loading}, \textit{DLL Proxying} y \textit{Reflective Loading}. Estas técnicas permiten la ejecución de código dentro de procesos legítimos, minimizando la huella en disco y favoreciendo un enfoque \textit{fileless}.
+
+Asimismo, se utiliza \textit{Reflective Loading} para la carga del módulo de \textit{Sliver C2} directamente en memoria, evitando el uso de \texttt{LoadLibrary} y eliminando la necesidad de escribir artefactos en disco. De este modo, el canal de mando y control se establece completamente en memoria, incrementando significativamente la dificultad de detección y análisis forense.
+
+Finalmente, se incorporan mecanismos de persistencia basados en \textit{Living-off-the-Land Binaries} (LOLBins), aprovechando herramientas legítimas del sistema para mantener el acceso en el tiempo sin introducir binarios adicionales en el sistema comprometido.
+
+La combinación de ambas fases permite modelar un escenario realista de intrusión avanzada, en el que se evoluciona desde un acceso inicial clásico hasta una operación completamente orientada a la ejecución en memoria, la evasión de controles de seguridad y el control persistente del sistema.
 
 \subsection*{Infraestructura de la víctima}
 
