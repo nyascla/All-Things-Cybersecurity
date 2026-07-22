@@ -52,7 +52,13 @@ Para un análisis detallado de las decisiones ofensivas tomadas durante esta fas
 
 \subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-A continuación se presentan las tácticas desarrolladas en esta fase. En la Tabla~\ref{tab:tactica-initial-access-entrega} se aborda la táctica de Acceso Inicial, mientras que en la Tabla~\ref{tab:tactica-execution-entrega} se detalla la táctica de Ejecución asociada al dispositivo.
+En esta fase de entrega, el adversario persigue romper el perímetro de seguridad e iniciar la intrusión mediante el despliegue de dos tácticas fundamentales:
+
+\begin{itemize}
+    \item \textbf{Initial Access (TA0001) (Tabla~\ref{tab:tactica-initial-access-entrega}):} El objetivo estratégico del atacante en esta táctica es establecer la primera cabeza de playa dentro del sistema víctima sin contar con credenciales previas ni requerir interacción previa del usuario, superando los controles perimetrales mediante un vector físico insospechado.
+    
+    \item \textbf{Execution (TA0002) (Tabla~\ref{tab:tactica-execution-entrega}):} Una vez insertado el dispositivo, la intención del atacante es forzar al sistema operativo a procesar e interpretar instrucciones no autorizadas de forma automática e inmediata, utilizando emulación de hardware para invocar interpretes de comandos del sistema sin alertar a la víctima.
+\end{itemize}
 
 \begin{table}[htbp]
     \centering
@@ -60,7 +66,7 @@ A continuación se presentan las tácticas desarrolladas en esta fase. En la Tab
     \label{tab:tactica-initial-access-entrega}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{3.8cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Initial Access (TA0001)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -74,7 +80,7 @@ A continuación se presentan las tácticas desarrolladas en esta fase. En la Tab
     \label{tab:tactica-execution-entrega}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{3.8cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -99,7 +105,13 @@ Para una descripción detallada del desarrollo y funcionamiento de este \textit{
 
 \subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-Esta fase abarca dos tácticas principales: Ejecución (Tabla~\ref{tab:tactica-execution-explotacion}) y Mando y Control (Tabla~\ref{tab:tactica-c2-explotacion}).
+Durante la fase de explotación, la visión global del adversario se enfoca en afianzar la ejecución del código inicial y tomar el control interactivo remoto del equipo mediante las siguientes tácticas:
+
+\begin{itemize}
+    \item \textbf{Execution (TA0002) (Tabla~\ref{tab:tactica-execution-explotacion}):} La meta del atacante en esta táctica es ejecutar scripts en memoria capaces de neutralizar defensas en tiempo de ejecución (como el bypass de AMSI) e iniciar la carga encubierta de binarios secundarios en directorios temporales.
+    
+    \item \textbf{Command and Control (TA0011) (Tabla~\ref{tab:tactica-c2-explotacion}):} El propósito táctico principal del adversario es romper la incomunicación del host infectado estableciendo el primer canal interactivo saliente (\textit{reverse shell}) hacia su servidor externo, permitiéndole interactuar dinámicamente con el sistema operativo comprometido.
+\end{itemize}
 
 \begin{table}[htbp]
     \centering
@@ -107,7 +119,7 @@ Esta fase abarca dos tácticas principales: Ejecución (Tabla~\ref{tab:tactica-e
     \label{tab:tactica-execution-explotacion}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -122,7 +134,7 @@ Esta fase abarca dos tácticas principales: Ejecución (Tabla~\ref{tab:tactica-e
     \label{tab:tactica-c2-explotacion}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Command and Control (TA0011)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -149,7 +161,15 @@ Un análisis en profundidad de estos procedimientos ofensivos se encuentra en el
 
 \subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-Esta fase comprende las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactica-defense-evasion-instalacion}), Ejecución (Tabla~\ref{tab:tactica-execution-instalacion}) y Persistencia (Tabla~\ref{tab:tactica-persistence-instalacion}).
+En la fase de instalación, la intención estratégica del atacante se orienta a consolidar su presencia de forma sigilosa y duradera en el tiempo, articulando su estrategia en torno a tres tácticas clave:
+
+\begin{itemize}
+    \item \textbf{Defense Evasion (TA0005) (Tabla~\ref{tab:tactica-defense-evasion-instalacion}):} El adversario busca camuflar sus componentes maliciosos en la estructura de aplicaciones legítimas (mediante \textit{DLL Proxying} y suplantación de archivos), impidiendo que los productos de seguridad defensivos detecten la anomalía o identifiquen firmas maliciosas en disco.
+    
+    \item \textbf{Execution (TA0002) (Tabla~\ref{tab:tactica-execution-instalacion}):} El objetivo táctico en este punto es transferir e instanciar dinámicamente la biblioteca maliciosa personalizada en el entorno de ejecución controlado del usuario.
+    
+    \item \textbf{Persistence (TA0003) (Tabla~\ref{tab:tactica-persistence-instalacion}):} La finalidad decisiva del atacante al implementar esta táctica es garantizar la supervivencia del compromiso frente a eventuales reinicios del sistema o cierres de sesión, asegurando que el implante se reactive automáticamente sin depender de la interacción del usuario ni del canal inicial.
+\end{itemize}
 
 \begin{table}[htbp]
     \centering
@@ -157,7 +177,7 @@ Esta fase comprende las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactic
     \label{tab:tactica-defense-evasion-instalacion}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Defense Evasion (TA0005)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -173,7 +193,7 @@ Esta fase comprende las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactic
     \label{tab:tactica-execution-instalacion}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -187,7 +207,7 @@ Esta fase comprende las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactic
     \label{tab:tactica-persistence-instalacion}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Persistence (TA0003)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -213,7 +233,13 @@ Para una descripción detallada sobre la carga reflectiva en memoria y la infrae
 
 \subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-Esta fase se estructura en las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactica-defense-evasion-c2}) y Mando y Control (Tabla~\ref{tab:tactica-c2-c2}).
+En la fase de Mando y Control con el implante avanzado, el adversario persigue mantener una comunicación bidireccional estable, sigilosa e ininterrumpida a través de dos tácticas principales:
+
+\begin{itemize}
+    \item \textbf{Defense Evasion (TA0005) (Tabla~\ref{tab:tactica-defense-evasion-c2}):} El objetivo de alto nivel del atacante es operar en la memoria RAM de forma completamente invisible para el almacenamiento en disco (\textit{fileless}), utilizando carga reflectiva para inyectar la carga útil sin dejar rastro de ficheros ni utilizar APIs estándar de inspección.
+    
+    \item \textbf{Command and Control (TA0011) (Tabla~\ref{tab:tactica-c2-c2}):} La intención estratégica del adversario es mimetizar el tráfico malicioso dentro del flujo legítimo de navegación HTTPS de la empresa mediante patrones de \textit{beaconing} y cifrado de extremo a extremo, haciendo que las comunicaciones de control resulten indistinguibles del tráfico de usuario habitual.
+\end{itemize}
 
 \begin{table}[htbp]
     \centering
@@ -221,7 +247,7 @@ Esta fase se estructura en las tácticas de Evasión de Defensas (Tabla~\ref{tab
     \label{tab:tactica-defense-evasion-c2}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Defense Evasion (TA0005)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -235,7 +261,7 @@ Esta fase se estructura en las tácticas de Evasión de Defensas (Tabla~\ref{tab
     \label{tab:tactica-c2-c2}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Command and Control (TA0011)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
@@ -256,11 +282,15 @@ Esta fase se estructura en las tácticas de Evasión de Defensas (Tabla~\ref{tab
 \newpage
 \subsection{Acciones sobre el objetivo} \label{sec:acciones-sobre-objetivo}
 
-En la fase final de la intrusión, el atacante ejecuta una acción controlada para simular el impacto en el equipo comprometido sin provocar daños irreversibles.
+En la fase final de la intrusión, el atacante ejecuta una acción controlada para simular el impacto en el equipo compromised sin provocar daños irreversibles.
 
 \subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-En la Tabla~\ref{tab:tactica-impact-acciones} se especifica la táctica de Impacto correspondiente a esta fase final.
+En la etapa culminante de la intrusión, la visión del adversario se centra en materializar la finalidad operacional última del ataque mediante la táctica de Impacto:
+
+\begin{itemize}
+    \item \textbf{Impact (TA0040) (Tabla~\ref{tab:tactica-impact-acciones}):} El objetivo fundamental del atacante en esta fase final es alterar, manipular o afectar la disponibilidad e integridad de los activos del sistema. En este escenario didáctico, el adversario busca demostrar el impacto potencial que tendría una amenaza como un ransomware mediante la generación controlada de un indicador de compromiso (IOC) en el escritorio, inyectado directamente en memoria sin causar destrucción de datos.
+\end{itemize}
 
 \begin{table}[htbp]
     \centering
@@ -268,7 +298,7 @@ En la Tabla~\ref{tab:tactica-impact-acciones} se especifica la táctica de Impac
     \label{tab:tactica-impact-acciones}
     \renewcommand{\arraystretch}{1.3}
     \small
-    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+    \begin{tabularx}{\textwidth}{|K{4.2cm}|L|}
         \hline
         \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Impact (TA0040)} \\ \hline
         \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline

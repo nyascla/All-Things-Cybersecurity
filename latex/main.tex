@@ -15,8 +15,12 @@
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{ragged2e}
 \usepackage{pdfpages}
 \usepackage[acronym,nonumberlist,toc]{glossaries}
+
+\newcolumntype{L}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{K}[1]{>{\RaggedRight\bfseries\columncolor{gray!15}\arraybackslash}p{#1}}
 
 \bibliographystyle{IEEEtran}
 
