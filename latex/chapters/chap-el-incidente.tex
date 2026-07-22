@@ -3,24 +3,25 @@
 
 \section{Mapeo del Ataque a la Cyber Kill Chain y MITRE ATT\&CK}
 
-En esta sección se presenta una referencia técnica que describe el ataque desde la perspectiva del adversario. Se detallan las acciones realizadas por el atacante, los objetivos perseguidos en cada fase y las técnicas MITRE ATT\&CK empleadas. Además, cada acción se relaciona con los artefactos del sistema víctima donde pueden encontrarse evidencias relevantes, proporcionando una guía práctica para el análisis forense y la reconstrucción del incidente.
+En esta sección se presenta una referencia técnica que describe el ataque desde la perspectiva del adversario. Se detallan las acciones realizadas por el atacante, los objetivos perseguidos en cada fase y las técnicas MITRE ATT\&CK empleadas, organizadas conceptualmente de forma que **cada tabla corresponde a una Táctica de MITRE ATT\&CK** dentro de su respectiva fase de la Cyber Kill Chain. Además, cada acción se relaciona con los artefactos del sistema víctima donde pueden encontrarse evidencias relevantes, proporcionando una guía práctica para el análisis forense y la reconstrucción del incidente.
 
 La Cyber Kill Chain se utiliza como marco para organizar la exposición de las distintas fases del ataque, manteniendo el orden cronológico natural en el que fueron ejecutadas. Sin embargo, es importante destacar que este orden no suele coincidir con el flujo real de una investigación \acrshort{dfir}. En la práctica, el analista raramente dispone de visibilidad sobre las fases iniciales de la intrusión; por el contrario, la investigación suele comenzar a partir de los indicadores de impacto o de las acciones finales del atacante. A partir de estas evidencias iniciales, el analista va reconstruyendo progresivamente la cadena de eventos, siguiendo el rastro de artefactos y evidencias hacia etapas anteriores del compromiso.
 
 Por este motivo, aunque las fases se presentan siguiendo la secuencia clásica de la Cyber Kill Chain, una lectura en sentido inverso refleja de forma más fiel el proceso de investigación que seguiría un analista para reconstruir la historia completa del ataque.
 
-El objetivo de esta sección es ofrecer una guía técnica que relacione de forma directa:
+El objetivo de esta sección es ofrecer una guía técnica estructurada que relacione de forma directa:
 \begin{itemize}
-    \item Las acciones ofensivas del atacante,
-    \item Las técnicas MITRE ATT\&CK asociadas,
-    \item Los artefactos del sistema donde podría hallarse evidencia de cada acción.
+    \item La fase de la Cyber Kill Chain,
+    \item La Táctica MITRE ATT\&CK asociada a cada objetivo táctico,
+    \item Las Técnicas concretas desarrolladas dentro de dicha táctica y su procedimiento técnico,
+    \item Los artefactos del sistema donde podría hallarse evidencia forense de cada acción.
 \end{itemize}
 
 \subsection{Resumen de Fases del Ataque}
 
 El desglose general y resumen de las distintas fases que componen la intrusión se encuentra detallado en el capítulo de Metodología (véase la Sección~\ref{sec:indice-fases-ataque}). 
 
-A continuación, en las siguientes secciones de este capítulo, se analiza en detalle cada una de dichas fases, profundizando en las acciones específicas del atacante, las técnicas MITRE ATT\&CK asociadas y los artefactos forenses concretos donde se manifiestan sus evidencias en el sistema comprometido.
+A continuación, en las siguientes secciones de este capítulo, se analiza en detalle cada una de dichas fases, profundizando en las acciones específicas del atacante organizadas por Tácticas de MITRE ATT\&CK y los artefactos forenses concretos donde se manifiestan sus evidencias en el sistema comprometido.
 
 
 
@@ -45,313 +46,240 @@ Desde el punto de vista del analista, esta fase puede apoyarse en servicios exte
 \newpage
 \subsection{Entrega} \label{sec:entrega}
 
-\subsubsection{BadUSB}
+En la fase de Entrega, el atacante interactúa por primera vez con la organización víctima marcando el inicio del incidente. El objetivo es introducir el primer \textit{payload} en el entorno objetivo mediante un dispositivo físico \textit{BadUSB}.
 
-En este punto, el atacante interactúa por primera vez con la organización víctima, marcando el inicio del incidente de seguridad. El objetivo de esta acción es introducir el primer \textit{payload} dentro del entorno de la víctima mediante un dispositivo \textit{BadUSB}.
+Para un análisis detallado de las decisiones ofensivas tomadas durante esta fase, véase el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:bad-usb}.
 
-Para un análisis detallado de las decisiones tomadas durante esta fase, véase el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:bad-usb}.
+\subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-\subsubsection{MITRE ATT\&CK (BadUSB)}
+A continuación se presentan las tácticas desarrolladas en esta fase. En la Tabla~\ref{tab:tactica-initial-access-entrega} se aborda la táctica de Acceso Inicial, mientras que en la Tabla~\ref{tab:tactica-execution-entrega} se detalla la táctica de Ejecución asociada al dispositivo.
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Initial Access (TA0001) / Execution (TA0002).
-        \item[Técnica:] 
-        \begin{description}
-            \item Replication Through Removable Media (T1091)
-            \item Input Injection (T1674)
-        \end{description}
-        \item[Procedimiento:]  
-        El atacante conecta un dispositivo \textit{BadUSB} que emula un teclado (\acrshort{hid}). Nada más inicializarse, el dispositivo inyecta pulsaciones de teclado que abren el cuadro de ejecución mediante \texttt{Win + R} y lanzan una consola de PowerShell. Desde ella, se ejecutan los comandos necesarios para descargar y ejecutar el script malicioso sin interacción del usuario.
-    \end{description}
-\end{leftbar}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Initial Access (TA0001) — Fase de Entrega}
+    \label{tab:tactica-initial-access-entrega}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{3.8cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Initial Access (TA0001)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Replication Through Removable Media (T1091) & El atacante conecta físicamente un dispositivo \textit{BadUSB} programado en el equipo víctima. El dispositivo es reconocido por el sistema operativo como una unidad removible y periférico de entrada legítimo, superando los controles de bloqueo de almacenamiento USB convencionales. \\ \hline
+    \end{tabularx}
+\end{table}
 
-\subsubsection{Artefactos relevantes (BadUSB)}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Execution (TA0002) — Fase de Entrega}
+    \label{tab:tactica-execution-entrega}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{3.8cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Input Injection (T1674) & Tras ser reconocido, el \textit{BadUSB} emula un teclado (\acrshort{hid}) e inyecta de forma automatizada una secuencia de pulsaciones de teclas: ejecuta la combinación \texttt{Win + R}, escribe \texttt{powershell.exe} y lanza la ejecución de comandos para descargar y ejecutar el script inicial sin interacción del usuario. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\subsubsection{Artefactos relevantes}
 
 \begin{itemize}
-    \item \textbf{Event Log (System / DriverFrameworks-UserMode)}:
-    Registra la conexión y enumeración del dispositivo USB, incluyendo su identificador, clase de dispositivo y marca temporal de conexión. Estos eventos permiten demostrar la presencia física del BadUSB en el sistema y correlacionar temporalmente el inicio de la actividad maliciosa con la inserción del dispositivo.
-
-    \item \textbf{Sysmon (EID~1 — Process Create)}: Registra la ejecución de \texttt{powershell.exe}, incluyendo la línea de comandos utilizada, el proceso padre (\texttt{explorer.exe}) y la marca temporal de creación. La presencia de parámetros como \texttt{-WindowStyle Hidden} o comandos codificados puede constituir un indicador de ejecución maliciosa. Correlacionado con los eventos de conexión del dispositivo \acrshort{hid}, permite asociar la ejecución de PowerShell con la actividad del BadUSB.
+    \item \textbf{Event Log (System / DriverFrameworks-UserMode)}: Registra la conexión y enumeración del dispositivo USB, incluyendo el id de dispositivo y la marca temporal de conexión, permitiendo demostrar la presencia física del BadUSB.
+    \item \textbf{Sysmon (EID~1 — Process Create)}: Registra la creación del proceso \texttt{powershell.exe} invocada desde \texttt{explorer.exe} tras la combinación de teclas inyectada.
 \end{itemize}
 
 
 \newpage
 \subsection{Explotación} \label{sec:explotacion}
 
-\subsubsection{Stage 1}
-
-En este punto, el atacante obtiene la primera ejecución de código en el sistema víctima y despliega el \textit{payload} inicial que le permite establecer una reverseshell con el equipo comprometido.
+En la fase de Explotación (Stage 1), el adversario consigue la primera ejecución de código malicioso e inicia el establecimiento de una conexión remota interactiva (\textit{reverse shell}) con el servidor atacante.
 
 Para una descripción detallada del desarrollo y funcionamiento de este \textit{payload}, véase el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:shellcode}.
 
-\subsubsection{MITRE ATT\&CK (Stage 1)}
+\subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Execution (TA0002) / Command and Control (TA0011).
-        \item[Técnica:]
-        \begin{description}
-            \item Command and Scripting Interpreter: PowerShell (T1059.001).
-            \item Ingress Tool Transfer (T1105).
-            \item User Execution: Malicious File (T1204.002).
-            \item Remote Services / Reverse Shell (T1021).
-        \end{description}
-        \item[Procedimiento:]  
-        El atacante ejecuta un script de PowerShell que establece conexión con la infraestructura \acrshort{c2} y descarga un archivo temporal denominado \texttt{2fd19d11-d4b7-46d1-94db-7edd16980d15.tmp} en el directorio temporal del usuario (\texttt{\$env:TEMP}).  
-        A continuación, renombra el archivo con extensión \texttt{.exe} y lo ejecuta de forma oculta mediante \texttt{-WindowStyle Hidden}. El binario lanzado establece una reverse shell hacia el servidor controlado por el atacante, brindándole acceso remoto al sistema comprometido.
-    \end{description}
-\end{leftbar}
+Esta fase abarca dos tácticas principales: Ejecución (Tabla~\ref{tab:tactica-execution-explotacion}) y Mando y Control (Tabla~\ref{tab:tactica-c2-explotacion}).
 
-\subsubsection{Artefactos relevantes (Stage 1)}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Execution (TA0002) — Fase de Explotación}
+    \label{tab:tactica-execution-explotacion}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Command and Scripting Interpreter: PowerShell (T1059.001) & Ejecución del script desofuscado en PowerShell que prepara el entorno, evade AMSI en memoria e invoca las instrucciones de descarga del payload secundario. \\ \hline
+        User Execution: Malicious File (T1204.002) & Ejecución encubierta del binario descargado mediante el parámetro \texttt{-WindowStyle Hidden}, iniciando la payload en segundo plano. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Command and Control (TA0011) — Fase de Explotación}
+    \label{tab:tactica-c2-explotacion}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Command and Control (TA0011)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Ingress Tool Transfer (T1105) & El script descarga un archivo temporal (\texttt{2fd19d11-d4b7-46d1-94db-7edd16980d15.tmp}) desde el servidor del atacante hacia la ruta \texttt{\$env:TEMP} y lo renombra a \texttt{.exe}. \\ \hline
+        Remote Services / Reverse Shell (T1021) & El binario ejecutado abre un socket TCP saliente hacia el puerto de escucha del atacante, proporcionando una shell de comandos interactiva. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\subsubsection{Artefactos relevantes}
 
 \begin{itemize}
-    \item \textbf{PowerShell Operational Log (EID~4104 — ScriptBlockLogging)}:
-    Fuente primaria para T1059.001. Registra el contenido íntegro del script
-    ejecutado, incluyendo la URL de descarga, el renombrado del fichero y el
-    uso de \texttt{-WindowStyle Hidden}, proporcionando la reconstrucción
-    completa del vector de entrada.
-
-    \item \textbf{Sysmon (EID~1 — ProcessCreate / EID~3 — NetworkConnect)}:
-    El EID~1 captura la ejecución del binario temporal con su proceso padre
-    (\texttt{powershell.exe}), línea de comando y hash, confirmando la cadena
-    de ejecución. El EID~3 registra la conexión saliente de la reverse shell
-    con IP y puerto de destino.
-
-    \item \textbf{\$MFT}: Evidencia la creación del fichero \texttt{.tmp} y su
-    renombrado a \texttt{.exe} en \texttt{\$env:TEMP}, con timestamps MACB que
-    permiten detectar \textit{timestomping} y situar el evento en la línea
-    temporal.
+    \item \textbf{PowerShell Operational Log (EID~4104 — ScriptBlockLogging)}: Registra el contenido íntegro del script ejecutado, incluyendo la URL de descarga y los comandos de ejecución.
+    \item \textbf{Sysmon (EID~1 — ProcessCreate / EID~3 — NetworkConnect)}: El EID~1 captura la ejecución del binario en \texttt{\$env:TEMP} y el EID~3 registra la conexión saliente de la reverse shell.
+    \item \textbf{\$MFT}: Registra las marcas temporales MACB de creación y renombrado del fichero ejecutable en el directorio temporal.
 \end{itemize}
-
-
-
 
 
 \newpage
 \subsection{Instalación} \label{sec:instalacion}
 
-\subsubsection{Stage 2} 
+En la fase de Instalación (Stage 2), el atacante consolida su presencia en la máquina mediante técnicas de \textit{\acrshort{dll} Hijacking}, \textit{Side Loading} y \textit{\acrshort{dll} Proxying}, asegurando asimismo la persistencia en el sistema.
 
-En esta fase, el atacante ya ha superado la etapa de explotación inicial y ha logrado ejecutar código en el sistema víctima, obteniendo una \textit{reverse shell}. A partir de este acceso, procede a preparar el \textit{stage 2} del ataque y a desplegar su \textit{payload} final, cuyo objetivo es establecer un mecanismo de acceso persistente al sistema comprometido.
+Un análisis en profundidad de estos procedimientos ofensivos se encuentra en el Capítulo~\ref{chap:red-team}, Secciones~\ref{sec:dll-hijacking} y~\ref{sec:persistencia}.
 
-Para lograrlo, el adversario emplea una combinación de técnicas basadas en \textit{\acrshort{dll} Hijacking}, \textit{Side Loading} y \textit{\acrshort{dll} Proxying}. Un análisis detallado de este procedimiento puede consultarse en el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:dll-hijacking}.
+\subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-\subsubsection{MITRE ATT\&CK (Stage 2)}
+Esta fase comprende las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactica-defense-evasion-instalacion}), Ejecución (Tabla~\ref{tab:tactica-execution-instalacion}) y Persistencia (Tabla~\ref{tab:tactica-persistence-instalacion}).
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Defense Evasion (TA0005).
-        \item[Técnica:] Modify Registry or File Permissions: File and Directory Permissions Modification (T1222).
-        \item[Procedimiento:]  
-        El atacante copia el ejecutable legítimo de Calibre desde su ubicación original a un directorio donde dispone de permisos de escritura, concretamente \texttt{\%LOCALAPPDATA\%\textbackslash Microsoft\textbackslash WindowsApps}. Esta acción le permite controlar el entorno de carga de librerías del binario y establecer las condiciones necesarias para llevar a cabo el secuestro de \acrshort{dll}.
-    \end{description}
-\end{leftbar}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Defense Evasion (TA0005) — Fase de Instalación}
+    \label{tab:tactica-defense-evasion-instalacion}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Defense Evasion (TA0005)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        File and Directory Permissions Modification (T1222) & Copia del ejecutable legítimo de Calibre a \texttt{\%LOCALAPPDATA\%\textbackslash Microsoft\textbackslash WindowsApps}, un directorio con permisos de escritura para el usuario donde se controla el orden de carga de librerías. \\ \hline
+        Hijack Execution Flow: DLL Search Order Hijacking (T1574.001) & Ubicación de la \acrshort{dll} maliciosa \texttt{calibre-launcher.dll} en el mismo directorio del ejecutable para forzar su carga con preferencia sobre la librería de sistema. \\ \hline
+        Masquerading: Match Legitimate Name or Location (T1036.005) & Renombrado de la \acrshort{dll} legítima a \texttt{calibre-launcher-old.dll} y suplantación de su nombre original por la librería maliciosa que actúa como proxy reenviando las llamadas legítimas. \\ \hline
+    \end{tabularx}
+\end{table}
 
-\subsubsection{Artefactos relevantes (Stage 2)}
-\begin{itemize}
-    \item \textbf{\$MFT}: Evidencia directa de la copia del binario legítimo de Calibre,
-    con timestamps de creación que sitúan el evento en la línea temporal.
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Execution (TA0002) — Fase de Instalación}
+    \label{tab:tactica-execution-instalacion}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Execution (TA0002)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Ingress Tool Transfer (T1105) & Transferencia y descarga desde el \acrshort{c2} de la \acrshort{dll} maliciosa \texttt{calibre-launcher.dll} al directorio de trabajo del binario de Calibre. \\ \hline
+    \end{tabularx}
+\end{table}
 
-    \item \textbf{Sysmon (EID~11 — FileCreate)}: Captura la operación de copia con
-    proceso origen, ruta destino y timestamp, permitiendo atribuir la acción
-    a la reverse shell activa en ese momento.
-\end{itemize}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Persistence (TA0003) — Fase de Instalación}
+    \label{tab:tactica-persistence-instalacion}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Persistence (TA0003)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Scheduled Task/Job (T1053) & Creación de la tarea programada \texttt{calibre-update} configurada para ejecutarse al inicio del sistema. La tarea invoca \texttt{calibre-debug.exe}, provocando la carga automática de la \acrshort{dll} maliciosa tras cada reinicio. \\ \hline
+    \end{tabularx}
+\end{table}
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Execution (TA0002).
-        \item[Técnica:] Ingress Tool Transfer (T1105).
-        \item[Procedimiento:]  
-        El atacante descarga en el directorio del binario legítimo una \acrshort{dll} maliciosa denominada \texttt{calibre-launcher.dll}, diseñada específicamente para reemplazar a la librería legítima. Esta \acrshort{dll} ya contiene la carga maliciosa integrada, lista para ejecutar el implante en cuanto la aplicación intente cargarla de forma normal.
-    \end{description}
-\end{leftbar}
-
-\textbf{Artefactos relevantes}
-\begin{itemize}
-    \item \textbf{Sysmon (EID~11 — FileCreate / EID~3 — NetworkConnect)}:
-    El EID~11 registra la creación de \texttt{calibre-launcher.dll} en el
-    directorio controlado por el atacante. El EID~3 evidencia la descarga
-    previa desde el \acrshort{c2}, atribuyendo ambas acciones al proceso de la reverse
-    shell.
-
-    \item \textbf{\$MFT}: Confirma la existencia del fichero, su ruta exacta
-    y los timestamps de creación, útiles para detectar manipulación
-    (\textit{timestomping}) si difieren de los registrados por Sysmon.
-\end{itemize}
-
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Defense Evasion / Privilege Escalation (TA0005 / TA0004).
-        \item[Técnica:] 
-        \begin{itemize} 
-            \item Hijack Execution Flow: DLL Search Order Hijacking (T1574.001).
-            \item Masquerading: Match Legitimate Name or Location (T1036.005).
-        \end{itemize} 
-        \item[Procedimiento:]  
-        El atacante renombra la \acrshort{dll} legítima a \texttt{calibre-launcher-old.dll} para conservar su funcionalidad original. A continuación, coloca en el directorio una \acrshort{dll} maliciosa con el nombre legítimo esperado por la aplicación (\texttt{calibre-launcher.dll}). Debido al orden de búsqueda de \acrshort{dll}s en Windows, la aplicación carga primero la \acrshort{dll} maliciosa, que actúa como un proxy reenviando las llamadas a la \acrshort{dll} legítima renombrada mientras ejecuta su código malicioso.
-    \end{description}
-\end{leftbar}
-
-\textbf{Artefactos relevantes}
-\begin{itemize}
-    \item \textbf{\$MFT}: Registra el renombrado de \texttt{calibre-launcher.dll}
-    legítima a \texttt{calibre-launcher-old.dll} y la creación de la \acrshort{dll}
-    maliciosa con el nombre original, con timestamps que permiten reconstruir
-    el orden exacto de las operaciones.
-
-    \item \textbf{Sysmon (EID~7 — ImageLoad)}: Captura la carga de
-    \texttt{calibre-launcher.dll} por el proceso de Calibre. Una \acrshort{dll} sin
-    firma o con firma no coincidente con la versión legítima es el indicador
-    más directo del hijacking.
-
-    \item \textbf{Prefetch Files}: Confirma que el ejecutable de Calibre se
-    lanzó desde el directorio alterado, lo que implica necesariamente que
-    la \acrshort{dll} maliciosa fue la primera en el orden de búsqueda.
-\end{itemize}
-
-
-\subsubsection{Persistencia} 
-
-El atacante establece un mecanismo de persistencia mediante la creación de una tarea programada, garantizando así que su \textit{payload} se ejecute automáticamente tras cada reinicio del sistema y mantenga el acceso al entorno comprometido.
-
-Para una descripción detallada del procedimiento, consúltese el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:persistencia}.
-
-\subsubsection{MITRE ATT\&CK (Persistencia)}
-
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Persistence (TA0003).
-        \item[Técnica:] Scheduled Task/Job (T1053).
-        \item[Procedimiento:]  
-        El atacante crea una tarea programada denominada \texttt{calibre-update}, configurada para ejecutarse en cada reinicio del sistema. Esta tarea invoca \texttt{calibre-debug.exe}, un ejecutable legítimo presente en la instalación original y que puede ejecutarse sin interfaz gráfica. Al lanzarse automáticamente, el binario vuelve a cargar la \acrshort{dll} maliciosa, permitiendo que el implante de Sliver recupere la persistencia tras cada reinicio.
-    \end{description}
-\end{leftbar}
-
-\subsubsection{Artefactos relevantes (Persistencia)}
+\subsubsection{Artefactos relevantes}
 
 \begin{itemize}
-    \item \textbf{Event Log (Microsoft-Windows-TaskScheduler/Operational)}: Fuente
-    primaria para T1053. Los eventos EID~106 (creación), EID~200 (ejecución
-    iniciada) y EID~201 (acción completada) documentan el ciclo de vida completo
-    de \texttt{calibre-update}, con timestamps, usuario creador y línea de comando
-    invocada.
-
-    \item \textbf{Scheduled Tasks (\texttt{TaskCache} en el registro /
-    \texttt{C:\textbackslash Windows\textbackslash System32\textbackslash Tasks})}: 
-    Contiene la definición XML de la tarea, incluyendo trigger (al inicio),
-    ejecutable (\texttt{calibre-debug.exe}) y ruta completa, permitiendo
-    reconstruir la intención del atacante sin depender de logs.
-
-    \item \textbf{Sysmon (EID~1 — ProcessCreate)}: Registra cada ejecución
-    automática de \texttt{calibre-debug.exe} con proceso padre
-    (\texttt{svchost.exe} vía Task Scheduler), lo que confirma que el binario
-    se lanza por la tarea y no por interacción del usuario.
+    \item \textbf{\$MFT}: Registro de las operaciones de copia, renombrado de DLLs y timestamps de creación de ficheros en el directorio del usuario.
+    \item \textbf{Sysmon (EID~11 — FileCreate / EID~7 — ImageLoad)}: Registra la creación de la DLL maliciosa y su posterior carga por parte del proceso legítimo de Calibre.
+    \item \textbf{TaskScheduler Operational Log (EID~106, 200, 201)}: Documenta el registro y ejecución de la tarea programada \texttt{calibre-update}.
 \end{itemize}
-
 
 
 \newpage
 \subsection{Mando y Control (C2)} \label{sec:comando-control}
 
-\subsubsection{Sliver C2} 
+En la fase de Comando y Control, el adversario mantiene una sesión activa y persistente en memoria mediante el implante de \textit{Sliver C2}, utilizando comunicaciones cifradas y técnicas de inyección en memoria.
 
-En este punto, el atacante ya ha superado las fases de explotación e instalación y dispone de un mecanismo persistente que le permite interactuar de forma continua con el sistema víctima mediante un implante de \textit{Sliver}.
+Para una descripción detallada sobre la carga reflectiva en memoria y la infraestructura C2, consúltese el Capítulo~\ref{chap:red-team}, Secciones~\ref{sec:reflective} y~\ref{sec:infraestructura}.
 
-Para una descripción detallada del proceso mediante el cual el implante de Sliver se carga en memoria en cada ejecución, evitando la detección por parte del \acrshort{edr}, consúltese el Capítulo~\ref{chap:red-team}, Sección~\ref{sec:reflective}. 
+\subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-Asimismo, para obtener información sobre la infraestructura de servidores utilizada por el atacante, véase la Sección~\ref{sec:infraestructura}.
+Esta fase se estructura en las tácticas de Evasión de Defensas (Tabla~\ref{tab:tactica-defense-evasion-c2}) y Mando y Control (Tabla~\ref{tab:tactica-c2-c2}).
 
-\subsubsection{MITRE ATT\&CK (Sliver C2)}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Defense Evasion (TA0005) — Fase de Comando y Control}
+    \label{tab:tactica-defense-evasion-c2}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Defense Evasion (TA0005)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Reflective Code Loading (T1620) & La \acrshort{dll} maliciosa descarga e inyecta el implante Sliver directamente en memoria mediante carga reflectiva (\textit{unbacked memory}), sin tocar disco ni utilizar las APIs convencionales de carga de módulos (\texttt{LoadLibrary}). \\ \hline
+    \end{tabularx}
+\end{table}
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Defense Evasion (TA0005).
-        \item[Técnica:] Reflective Code Loading (T1620).
-        \item[Procedimiento:] La \acrshort{dll} maliciosa utiliza carga reflexiva para ejecutarse dentro del proceso comprometido. El módulo \texttt{calibre-launcher.dll} establece una conexión con el servidor \acrshort{c2}, descarga el implante de Sliver y lo carga en memoria mediante un mecanismo de reflexión, sin utilizar las APIs estándar de carga de librerías ni generar artefactos adicionales en disco.
-    \end{description}
-\end{leftbar}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Command and Control (TA0011) — Fase de Comando y Control}
+    \label{tab:tactica-c2-c2}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Command and Control (TA0011)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Application Layer Protocol: Web Protocols (T1071.001) & El implante Sliver mantiene la comunicación con el servidor C2 mediante peticiones HTTPS periódicas (\textit{beaconing}) simulando tráfico de navegación web legítimo. \\ \hline
+        Encrypted Channel (T1573) & Comunicación cifrada de extremo a extremo que impide la inspección directa del contenido de los comandos ejecutados por el atacante. \\ \hline
+    \end{tabularx}
+\end{table}
 
-\subsubsection{Artefactos relevantes (Sliver C2)}
+\subsubsection{Artefactos relevantes}
 
 \begin{itemize}
-    \item \textbf{Memory Dump (proceso anfitrión)}: Fuente primaria para esta técnica.
-    Permite localizar el implante Sliver en regiones de memoria ejecutables sin
-    respaldo en disco (\textit{unbacked executable regions}), recuperar el código
-    del loader reflexivo y confirmar la ausencia de carga mediante APIs estándar
-    (\texttt{LoadLibrary}).
-
-    \item \textbf{Sysmon (EID 3 — NetworkConnect / EID 7 — ImageLoad)}:
-    El EID~3 evidencia la conexión saliente del proceso anfitrión hacia el \acrshort{c2}
-    durante la descarga del implante. El EID~7 permite detectar anomalías en la
-    carga de módulos: \texttt{calibre-launcher.dll} cargada desde una ruta
-    inusual o sin firma verificable.
-
-    \item \textbf{Suricata}: Registra el tráfico de descarga del implante y la
-    sesión \acrshort{c2} persistente de Sliver, identificable por sus patrones de
-    comunicación característicos (certificados TLS autofirmados, JA3/JA3S,
-    beaconing).
+    \item \textbf{Volcado de Memoria RAM}: Identificación del implante de Sliver en regiones de memoria ejecutable sin respaldo en disco (\textit{unbacked memory}).
+    \item \textbf{Sysmon (EID~3 — NetworkConnect)}: Conexión de red saliente iniciada desde el proceso anfitrión hacia la IP del servidor C2.
+    \item \textbf{Suricata Log}: Detección de patrones de comunicación C2, certificados TLS autofirmados y firmas JA3/JA3S anómalas.
 \end{itemize}
-
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Command and Control (TA0011).
-        \item[Técnicas:]
-        \begin{itemize} 
-            \item Application Layer Protocol: Web Protocols (T1071.001)
-            \item Encrypted Channel (T1573)
-        \end{itemize}
-        \item[Procedimiento:]  
-        El implante residente en memoria mantiene un canal de comunicación persistente con la infraestructura de mando y control mediante un mecanismo de \textit{beaconing}. Para reducir la probabilidad de detección, el tráfico se encapsula dentro de peticiones HTTPS que imitan patrones legítimos de navegación web. Además, todas las comunicaciones viajan cifradas, lo que impide la inspección de su contenido y permite al atacante intercambiar órdenes y resultados sin generar artefactos visibles o anomalías en el tráfico.
-    \end{description}
-\end{leftbar}
-
-\textbf{Artefactos relevantes}
-\begin{itemize}
-    \item \textbf{Suricata}: Fuente primaria para esta técnica. Registra el tráfico
-    HTTPS hacia el \acrshort{c2} con metadatos de red inspeccionables a pesar del cifrado:
-    JA3/JA3S fingerprint del cliente TLS (no coincide con navegadores legítimos),
-    certificado del servidor (autofirmado, CN genérico), IP/dominio de destino
-    y periodicidad de las conexiones que delata el patrón de \textit{beaconing}.
-
-    \item \textbf{Sysmon (EID~3 — NetworkConnect)}: Atribuye las conexiones salientes
-    al proceso anfitrión del implante, con timestamp, IP de destino y puerto.
-    Permite correlacionar el intervalo regular de beaconing con el PID responsable
-    y confirmar que el proceso generador no debería producir tráfico HTTPS saliente.
-\end{itemize}
-
 
 
 \newpage
-\subsection{Acciones sobre el objetivo}
-\label{sec:acciones-sobre-objetivo}
+\subsection{Acciones sobre el objetivo} \label{sec:acciones-sobre-objetivo}
 
-\subsubsection{Impacto simulado} 
+En la fase final de la intrusión, el atacante ejecuta una acción controlada para simular el impacto en el equipo comprometido sin provocar daños irreversibles.
 
-En este punto, el atacante ya ha permanecido un periodo considerable dentro de la organización, llevando a cabo diversas actividades de post-explotación. En la fase final de su operación ejecuta una acción controlada que simula el impacto sobre el sistema comprometido mediante la creación de un fichero en el escritorio del usuario.
+\subsubsection{Mapeo por Tácticas MITRE ATT\&CK}
 
-\begin{leftbar}
-    \begin{description}
-        \item[Táctica:] Impact (TA0040).
-        \item[Técnicas:] Data Manipulation (T1565).
-        \item[Procedimiento:] Se desplegó un \textit{.NET assembly} dentro del proceso donde residía el implante. Este componente ejecuta una acción controlada consistente en la creación de un fichero en el escritorio del usuario (\texttt{desktop\_proof.txt}) como indicador de compromiso del sistema, sin realizar cifrado ni modificación destructiva de datos.
-    \end{description}
-\end{leftbar}
+En la Tabla~\ref{tab:tactica-impact-acciones} se especifica la táctica de Impacto correspondiente a esta fase final.
 
-\textbf{Artefactos relevantes}
+\begin{table}[htbp]
+    \centering
+    \caption{Táctica: Impact (TA0040) — Fase de Acciones sobre el Objetivo}
+    \label{tab:tactica-impact-acciones}
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{|>{\bfseries\columncolor{gray!15}}p{4.2cm}|X|}
+        \hline
+        \multicolumn{2}{|c|}{\cellcolor{blue!15}\bfseries Táctica: Impact (TA0040)} \\ \hline
+        \textbf{Técnica} & \textbf{Procedimiento y Ejemplo Concreto} \\ \hline
+        Data Manipulation (T1565) & Despliegue e invocación en memoria de un assembly .NET desde el implante de Sliver que genera el archivo \texttt{desktop\_proof.txt} en el escritorio del usuario como indicador de compromiso (IOC), simulando el impacto de un ataque de ransomware sin destruición de datos. \\ \hline
+    \end{tabularx}
+\end{table}
+
+\subsubsection{Artefactos relevantes}
+
 \begin{itemize}
-    \item \textbf{Sysmon (EID~11 — FileCreate / EID~7 — ImageLoad)}: El EID~11
-    captura la creación de \texttt{desktop\_proof.txt} atribuyéndola al proceso
-    contenedor del implante con PID y ruta completa. El EID~7 correlacionable
-    evidencia la carga del assembly .NET en un proceso que no debería ejecutar
-    código gestionado, enlazando la acción con el mecanismo de ejecución.
-
-    \item \textbf{.NET \acrshort{clr} Logs (\acrshort{etw})}: Confirma la carga dinámica del assembly
-    en tiempo de ejecución dentro del proceso comprometido, indicador directo
-    de ejecución en memoria sin artefactos en disco.
-
-    \item \textbf{Memory Dump (proceso contenedor)}: Permite recuperar el assembly
-    .NET inyectado, reconstruir su código y confirmar que la creación del
-    fichero fue consecuencia de ejecución en memoria y no de un binario
-    independiente.
+    \item \textbf{Sysmon (EID~11 — FileCreate / EID~7 — ImageLoad)}: Captura de la creación del fichero \texttt{desktop\_proof.txt} en el escritorio y carga de la infraestructura del .NET CLR en el proceso anfitrión.
+    \item \textbf{.NET CLR Logs (ETW)}: Evidencia de la carga dinámica del assembly inyectado en memoria.
+    \item \textbf{Volcado de Memoria RAM}: Extracción del assembly .NET inyectado para su análisis e inspección de código.
 \end{itemize}
