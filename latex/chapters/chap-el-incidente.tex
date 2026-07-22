@@ -16,32 +16,12 @@ El objetivo de esta sección es ofrecer una guía técnica que relacione de form
     \item Los artefactos del sistema donde podría hallarse evidencia de cada acción.
 \end{itemize}
 
-\subsection{Indice de fases del ataque}
+\subsection{Resumen de Fases del Ataque}
 
-\begin{itemize}
-    \item \textbf{Reconocimiento (Reconnaissance) \ref{sec:reconocimiento}:} 
-    Recopilación de información sobre el entorno objetivo mediante análisis de superficie expuesta, infraestructura Active Directory en GOAD-Light y servicios accesibles de la workstation.
-     
-    \item \textbf{Preparación de armas (Weaponization) \ref{sec:armamento}:} 
-    Desarrollo del payload en PowerShell, construcción del loader en .NET y preparación del implante de Sliver junto con la infraestructura de \acrshort{c2}.
- 
-    \item \textbf{Entrega (Delivery) \ref{sec:entrega}:} 
-    Introducción del payload inicial mediante dispositivo BadUSB emulando teclado \acrshort{hid}, ejecutando comandos automáticamente en la máquina víctima sin interacción del usuario.
+El desglose general y resumen de las distintas fases que componen la intrusión se encuentra detallado en el capítulo de Metodología (véase la Sección~\ref{sec:indice-fases-ataque}). 
 
-    \item \textbf{Explotación (Exploitation) \ref{sec:explotacion}:} 
-    Ejecución inicial de código mediante script de PowerShell que descarga y lanza un payload en \texttt{\$env:TEMP}, estableciendo una reverse shell hacia el servidor del atacante.
- 
-    \item \textbf{Instalación (Installation) \ref{sec:instalacion}:} 
-    Despliegue de \acrshort{dll} maliciosa mediante \acrshort{dll} hijacking en el binario de Calibre y establecimiento de persistencia mediante ejecución del payload en cada inicio del sistema.
+A continuación, en las siguientes secciones de este capítulo, se analiza en detalle cada una de dichas fases, profundizando en las acciones específicas del atacante, las técnicas MITRE ATT\&CK asociadas y los artefactos forenses concretos donde se manifiestan sus evidencias en el sistema comprometido.
 
-    \item \textbf{Comando y Control (Command and Control, \acrshort{c2}) \ref{sec:comando-control}:} 
-    Comunicación persistente del implante de Sliver con infraestructura externa mediante beaconing HTTPS cifrado, permitiendo ejecución remota de comandos y exfiltración de resultados.
-
-    \item \textbf{Acciones sobre el objetivo (Actions on Objectives) \ref{sec:acciones-sobre-objetivo}:} 
-    Ejecución del componente malicioso desde el implante en memoria (.NET), realizando una acción final controlada consistente en la creación de un fichero en el escritorio del usuario como indicador de compromiso, simulando el impacto de una fase de ransomware sin ejecutar operaciones destructivas.
-\end{itemize}
-
-No se trata de una investigación completa, sino de una referencia estructurada que ayuda a entender cómo se manifiestan las técnicas del atacante en el sistema comprometido.
 
 
 

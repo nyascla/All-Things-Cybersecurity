@@ -1,0 +1,65 @@
+\chapter{Resultados, Conclusiones y Trabajo Futuro}
+\label{chap:resultados-conclusiones}
+
+En este capítulo se sintetizan los resultados derivados del desarrollo y ejecución del escenario didáctico de intrusión, se presentan las conclusiones alcanzadas respecto a los objetivos planteados y se proponen las líneas de trabajo futuro para continuar sofisticando el escenario ofensivo y su valor analítico.
+
+\section{Resultados Obtenidos}
+
+El desarrollo de este Trabajo Final de Máster ha culminado con la creación y validación de un escenario completo de ciberataque realista, reproducible y totalmente documentado, diseñado para el entrenamiento práctico en Análisis Forense y Respuesta ante Incidentes (\acrshort{dfir}).
+
+\subsection{Generación de Artefactos Forenses}
+
+A lo largo de la ejecución controlada de la cadena de intrusión (\textit{Cyber Kill Chain}), se ha generado un corpus completo de evidencias en el sistema víctima, abarcando todas las fases del ataque:
+
+\begin{itemize}
+    \item \textbf{Acceso Inicial y Explotación:} Logs de eventos de PowerShell (Event ID 4104) que registran el script de desofuscación e invocación del payload inicial, así como trazas en memoria derivadas del \textit{bypass} de \acrshort{amsi} mediante modificación en tiempo de ejecución de las estructuras del proceso.
+    
+    \item \textbf{Persistencia e Instalación:} Ficheros binarios y bibliotecas en disco asociados a la técnica de \acrshort{dll} Hijacking (\textit{DLL Proxying}) sobre la aplicación legítima Calibre (\texttt{netutils.dll}), entradas en el Registro de Windows y definiciones XML en la ruta del Programador de Tareas.
+    
+    \item \textbf{Comando y Control (\acrshort{c2}):} Artefactos en memoria RAM del proceso infectado correspondientes a la carga reflectiva del implante de Sliver (\acrshort{pic}), páginas de memoria asignadas con permisos de ejecución (\texttt{PAGE\_EXECUTE\_READWRITE}) no vinculadas a imágenes en disco (\textit{unbacked memory}), y capturas de tráfico de red cifrado mediante HTTPS.
+    
+    \item \textbf{Acciones sobre el Objetivo:} Registro en el MFT y USN Journal de la creación del fichero indicador de compromiso en el escritorio del usuario, simulando el impacto final de un ransomware sin comprometer la integridad del sistema.
+\end{itemize}
+
+\subsection{Validación de Detectabilidad y Trazabilidad}
+
+Se ha verificado experimentalmente que la totalidad de los artefactos generados son detectables y analizables utilizando herramientas forenses estándar de la industria (tales como KAPE, Volatility 3, EvtxECmd, PECmd y Wireshark). Se ha establecido una trazabilidad directa bidireccional entre las acciones ofensivas ejecutadas por el Red Team y los rastros digitales identificados por el Blue Team, confirmando la validez del laboratorio como recurso pedagógico.
+
+\section{Conclusiones}
+
+\subsection{Cumplimiento de Objetivos}
+
+Se han alcanzado con éxito los objetivos marcados al inicio del proyecto. Se ha construido un entorno didáctico que cierra la brecha entre la teoría y la práctica en la formación en ciberseguridad, proporcionando a los estudiantes e investigadores un incidente completo sobre el que ejercitar tanto la reconstrucción forense cronológica como la interpretación de las motivaciones del adversario.
+
+\subsection{Fundamentación en Ciencia de la Computación}
+
+Una de las conclusiones fundamentales derivadas de este trabajo es que el análisis defensivo avanzado y la detección de amenazas no pueden abordarse desde una perspectiva superficial basada en meras firmas estáticas. Para comprender verdaderamente cómo se comporta un malware moderno y cómo detectarlo, es imprescindible dominar la ciencia de computadores y el funcionamiento interno a bajo nivel de los sistemas operativos:
+
+\begin{itemize}
+    \item \textbf{Gestión de Memoria Virtual y Procesos:} Comprender el espacio de direcciones virtuales, el aislamiento entre \textit{User Mode} (Ring 3) y \textit{Kernel Mode} (Ring 0), las estructuras \acrshort{peb}, y cómo las funciones de la Win32 API (\texttt{VirtualAlloc}, \texttt{WriteProcessMemory}, \texttt{CreateRemoteThread}) interactúan con la tabla de páginas del procesador.
+    
+    \item \textbf{Estructura del Formato PE y Carga Dinámica:} El análisis de técnicas como \textit{DLL Proxying} o \textit{Reflective DLL Injection} requiere una comprensión rigurosa de las secciones del formato \acrshort{pe}, la Import Address Table (\acrshort{iat}), la Export Address Table (EAT) y el proceso de relocalización de direcciones en memoria.
+\end{itemize}
+
+Este trabajo demuestra que el entrenamiento forense fundamentado en la arquitectura interna de la computadora transforma la investigación de un proceso reactivo de búsqueda de indicadores a una comprensión profunda de las leyes físicas y lógicas del sistema operativo.
+
+\section{Trabajo Futuro}
+
+Sobre la base establecida en esta memoria, el escenario puede continuar evolucionando mediante la inclusión de técnicas ofensivas progresivamente más complejas, elevando el nivel técnico requerido para su análisis y detección.
+
+\subsection{Implementación de Syscalls Directas e Indirectas}
+
+En la presente versión del ataque, las llamadas al sistema se canalizan a través de la Win32 API y de la Native API (\texttt{ntdll.dll}). Como trabajo futuro, se contempla la integración de técnicas de \textit{Direct Syscalls} e \textit{Indirect Syscalls} (mediante marcos como Hell's Gate, Halo's Gate o SysWhispers3):
+\begin{itemize}
+    \item \textbf{Direct Syscalls:} Carga manual del \acrshort{ssn} e invocación directa de la instrucción \texttt{syscall} en ensamblador x64, evitando pasar por las funciones exportadas de \texttt{ntdll.dll}.
+    \item \textbf{Indirect Syscalls:} Ejecución de la instrucción \texttt{syscall} dentro del espacio legítimo de \texttt{ntdll.dll} para eludir los controles de origen y telemetría de \acrshort{etw}/\acrshort{etw}-TI.
+\end{itemize}
+La incorporación de estas técnicas permitirá enseñar a los analistas a investigar ataques que evaden los \textit{hooks} en espacio de usuario colocados por las soluciones \acrshort{edr}.
+
+\subsection{Evasión Avanzada de EDR y Parcheo de Telemetría}
+
+Se plantea incorporar mecanismos de evasión más avanzados, tales como el parcheo en memoria de \acrshort{etw} (\textit{ETW Patching/Blinding}), \textit{DLL Unhooking} dinámico, \textit{Process Hollowing} y \textit{Thread Execution Hijacking}, aumentando el sigilo de las operaciones y exigiendo el uso de técnicas de volcado y análisis heurístico de memoria RAM para su detección.
+
+\subsection{Ampliación de Fases de Post-Explotación en Active Directory}
+
+Finalmente, se propone ampliar la fase de post-explotación integrando vectores de movimiento lateral y escalada de privilegios dentro del dominio Active Directory del laboratorio (GOAD-Light), incluyendo técnicas como \textit{Kerberoasting}, \textit{Pass-the-Hash}/\textit{Pass-the-Ticket} y manipulación de listas de control de acceso (\acrshort{abi}/ACLs). Esto permitirá proporcionar un ejercicio completo de intrusión a nivel corporativo.
