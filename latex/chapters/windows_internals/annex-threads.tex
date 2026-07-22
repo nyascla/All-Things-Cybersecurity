@@ -3,7 +3,7 @@
 Los \textit{threads} (hilos) constituyen la unidad básica de ejecución dentro de un proceso. Mientras que un proceso actúa como un contenedor que agrupa recursos (\textit{memory space}, manejadores de objetos, permisos, etc.), un hilo representa el flujo de instrucciones que realmente es ejecutado por la CPU.  
 Un proceso puede contener uno o múltiples hilos, cada uno con su propio estado independiente (contador de programa, conjunto de registros, pila), aunque todos comparten el mismo espacio de direcciones del proceso.
 
-Desde la perspectiva de la ciberseguridad y el desarrollo de malware, el control y manipulación de hilos es especialmente relevante. Muchas \textit{Tactics, Techniques and Procedures} (TTPs) se basan en crear nuevos hilos, modificar los existentes o abusar de ellos para ejecutar \textit{payloads} de forma encubierta, minimizando la generación de artefactos monitorizables por soluciones EDR.
+Desde la perspectiva de la ciberseguridad y el desarrollo de malware, el control y manipulación de hilos es especialmente relevante. Muchas \textit{Tactics, Techniques and Procedures} (\acrshort{ttp}s) se basan en crear nuevos hilos, modificar los existentes o abusar de ellos para ejecutar \textit{payloads} de forma encubierta, minimizando la generación de artefactos monitorizables por soluciones \acrshort{edr}.
 
 \subsubsection{Thread Environment Block (TEB)}
 

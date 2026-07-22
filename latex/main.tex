@@ -12,26 +12,45 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{pdfpages}
+\usepackage[acronym,nonumberlist,toc]{glossaries}
 
 \bibliographystyle{IEEEtran}
 
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\makenoidxglossaries
+\input{extras/glossary.tex}
+
 \begin{document}
 
-\tableofcontents
+% --- Front matter ---
+\input{chapters/abstract.tex}
 
+\tableofcontents
+\listoffigures
+\listoftables
+
+\glsaddall
+\printnoidxglossary[type=\acronymtype,title=Glosario de Acrónimos]
+
+% --- Chapters ---
 \input{chapters/chap-introduccion.tex}
 \input{chapters/chap-background.tex}
 \input{chapters/chap-metodologia.tex}
 \input{chapters/chap-el-incidente.tex}
 \input{chapters/chap-red-team-notes.tex}
 
-% annexes
+% --- Annexes ---
 \includepdf[pages=-]{ods_etsinf_latex/latex/ods_etsinf_anexo.pdf}
 
-% Resultados y bibliografía
+% --- Results and bibliography ---
 \input{extras/results.tex}
 \newpage
 \bibliography{extras/references.bib}
-
 
 \end{document}

@@ -5,26 +5,26 @@ La mayoría de los ejecutables actuales dependen de librerías externas, algunas
 Estas dependencias pueden manejarse de dos formas:
 
 \begin{itemize}
-    \item \textbf{Dependencias externas:} cargadas como DLL (\textit{Dynamic-Link Library}) en tiempo de ejecución.
+    \item \textbf{Dependencias externas:} cargadas como \acrshort{dll} (\textit{Dynamic-Link Library}) en tiempo de ejecución.
     \item \textbf{Dependencias estáticas:} incluidas directamente en el binario final durante la compilación.
 \end{itemize}
 
-Las DLL son archivos con formato PE, muy similares a los ejecutables. Cada módulo contiene sus propias cabeceras y secciones, tal como se explicó en el apartado de PE files, y se mapean en memoria de manera similar a un ejecutable.
+Las \acrshort{dll} son archivos con formato \acrshort{pe}, muy similares a los ejecutables. Cada módulo contiene sus propias cabeceras y secciones, tal como se explicó en el apartado de \acrshort{pe} files, y se mapean en memoria de manera similar a un ejecutable.
 
 \subsubsection{Carga de DLLs}
 
-Las DLL se cargan en el espacio de direcciones del proceso de dos formas:
+Las \acrshort{dll} se cargan en el espacio de direcciones del proceso de dos formas:
 
 \begin{itemize}
-    \item \textbf{Carga estática:} Si el ejecutable indica durante la compilación que depende de una DLL, el \textit{loader} de Windows la cargará al iniciar el programa y resolverá la \textit{Import Address Table (IAT)}.
-    \item \textbf{Carga dinámica:} Si la DLL se carga en tiempo de ejecución mediante funciones como \texttt{LoadLibraryA}, el \textit{loader} mapea la librería en el espacio de direcciones y resuelve la IAT para el módulo que la cargó.
+    \item \textbf{Carga estática:} Si el ejecutable indica durante la compilación que depende de una \acrshort{dll}, el \textit{loader} de Windows la cargará al iniciar el programa y resolverá la \textit{Import Address Table (\acrshort{iat})}.
+    \item \textbf{Carga dinámica:} Si la \acrshort{dll} se carga en tiempo de ejecución mediante funciones como \texttt{LoadLibraryA}, el \textit{loader} mapea la librería en el espacio de direcciones y resuelve la \acrshort{iat} para el módulo que la cargó.
 \end{itemize}
 
-Una vez cargada, la DLL queda registrada en el \textit{Process Environment Block (PEB)} del proceso. Si, en algún momento posterior, otro módulo intenta cargar la misma DLL, el sistema verifica el PEB y, en lugar de cargarla de nuevo, reutiliza la instancia ya existente en memoria.
+Una vez cargada, la \acrshort{dll} queda registrada en el \textit{Process Environment Block (\acrshort{peb})} del proceso. Si, en algún momento posterior, otro módulo intenta cargar la misma \acrshort{dll}, el sistema verifica el \acrshort{peb} y, en lugar de cargarla de nuevo, reutiliza la instancia ya existente en memoria.
 
 \paragraph{Orden de búsqueda de DLLs en Windows}
 
-El sistema operativo busca las DLL en el siguiente orden:
+El sistema operativo busca las \acrshort{dll} en el siguiente orden:
 
 \begin{enumerate}
     \item Directorio desde el cual se cargó la aplicación
@@ -39,4 +39,4 @@ El sistema operativo busca las DLL en el siguiente orden:
 
 Este mecanismo permite que un proceso utilice código externo sin incorporarlo de forma estática en su binario, favoreciendo la modularidad y la eficiencia en el uso de memoria.
 
-Para el desarrollo del trabajo se realizó una implementación en C de una versión simplificada del loader de Windows. En la referencia \cite{walkingloader} se describen de forma detallada todos los pasos que ejecuta un programa en C para convertir el archivo PE de una DLL en un módulo cargado en memoria y listo para ser utilizado.
+Para el desarrollo del trabajo se realizó una implementación en C de una versión simplificada del loader de Windows. En la referencia \cite{walkingloader} se describen de forma detallada todos los pasos que ejecuta un programa en C para convertir el archivo \acrshort{pe} de una \acrshort{dll} en un módulo cargado en memoria y listo para ser utilizado.

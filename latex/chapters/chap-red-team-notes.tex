@@ -17,13 +17,13 @@ Para este ejercicio se empleó un payload BadUSB de desarrollo propio, adaptado 
 
 \subsection{Bypass de AMSI}
 
-Cuando el acceso inicial se realiza mediante un dispositivo BadUSB, la ejecución del código suele producirse a través de PowerShell. Esto implica que el primer mecanismo defensivo que debe evadirse habitualmente es AMSI (Antimalware Scan Interface), ya que intercepta y analiza el contenido antes de que PowerShell lo interprete.
+Cuando el acceso inicial se realiza mediante un dispositivo BadUSB, la ejecución del código suele producirse a través de PowerShell. Esto implica que el primer mecanismo defensivo que debe evadirse habitualmente es \acrshort{amsi} (Antimalware Scan Interface), ya que intercepta y analiza el contenido antes de que PowerShell lo interprete.
 
-Uno de los bypasses más utilizados es la técnica conocida como \textit{AMSI Bypass – Memory Patching}. Durante la ejecución de código, PowerShell —o cualquier motor de scripting— invoca la función \texttt{AmsiScanBuffer()} presente en \texttt{amsi.dll}. Mediante la modificación en tiempo de ejecución de los bytes asociados al valor de retorno de esta función, es posible forzar que devuelva siempre un resultado “limpio” (por ejemplo, \texttt{0x80070057}, correspondiente a \texttt{E\_INVALIDARG}). En muchas versiones de Windows, AMSI interpreta este estado como un fallo no malicioso y permite la ejecución del contenido sin aplicar medidas de bloqueo. \textit{AMSI Bypass – Memory Patching: \cite{amsi-bypass-patching}}
+Uno de los bypasses más utilizados es la técnica conocida como \textit{\acrshort{amsi} Bypass – Memory Patching}. Durante la ejecución de código, PowerShell —o cualquier motor de scripting— invoca la función \texttt{AmsiScanBuffer()} presente en \texttt{amsi.dll}. Mediante la modificación en tiempo de ejecución de los bytes asociados al valor de retorno de esta función, es posible forzar que devuelva siempre un resultado “limpio” (por ejemplo, \texttt{0x80070057}, correspondiente a \texttt{E\_INVALIDARG}). En muchas versiones de Windows, \acrshort{amsi} interpreta este estado como un fallo no malicioso y permite la ejecución del contenido sin aplicar medidas de bloqueo. \textit{\acrshort{amsi} Bypass – Memory Patching: \cite{amsi-bypass-patching}}
 
-En determinados escenarios, AMSI puede detectar intentos de manipulación directa de \texttt{AmsiScanBuffer()} y finalizar el proceso de manera inmediata, lo que limita la eficacia del método anterior. Para abordar esta situación se emplea una técnica alternativa ampliamente documentada.
+En determinados escenarios, \acrshort{amsi} puede detectar intentos de manipulación directa de \texttt{AmsiScanBuffer()} y finalizar el proceso de manera inmediata, lo que limita la eficacia del método anterior. Para abordar esta situación se emplea una técnica alternativa ampliamente documentada.
 
-El segundo método utilizado fue el \textit{AMSI Bypass – Memory Patching via Reflection}. Durante la inicialización de PowerShell, la clase privada \\ \texttt{System.Management.Automation.AmsiUtils} crea una variable estática denominada \texttt{amsiInitFailed}. Si este valor se establece en \texttt{true}, AMSI considera que su inicialización ha fallado y desactiva de forma global todos los análisis para el resto de la sesión, independientemente de que \texttt{amsi.dll} continúe cargada y operativa. Este enfoque resulta especialmente útil en entornos donde el parcheo directo del buffer es detectado y bloqueado. \textit{AMSI Bypass - Memory Patching via Reflection: \cite{amsi-bypass-reflection}}
+El segundo método utilizado fue el \textit{\acrshort{amsi} Bypass – Memory Patching via Reflection}. Durante la inicialización de PowerShell, la clase privada \\ \texttt{System.Management.Automation.AmsiUtils} crea una variable estática denominada \texttt{amsiInitFailed}. Si este valor se establece en \texttt{true}, \acrshort{amsi} considera que su inicialización ha fallado y desactiva de forma global todos los análisis para el resto de la sesión, independientemente de que \texttt{amsi.dll} continúe cargada y operativa. Este enfoque resulta especialmente útil en entornos donde el parcheo directo del buffer es detectado y bloqueado. \textit{\acrshort{amsi} Bypass - Memory Patching via Reflection: \cite{amsi-bypass-reflection}}
 
 
 \section{Programar shellcodes} \label{sec:shellcodes}
@@ -33,7 +33,7 @@ Un shellcode es una secuencia de instrucciones ensambladas en formato position-i
 
 \subsection{Position-Independent Code (PIC)}
 
-Una característica fundamental del \textit{shellcode} es que debe estar implementado como \textit{Position-Independent Code} (PIC). Esto implica que el código puede ejecutarse desde cualquier dirección de memoria sin asumir un \textit{entry point} fijo. A diferencia de los programas compilados tradicionalmente —por ejemplo, un binario en C— que comienzan su ejecución en una dirección conocida y pueden referenciar offsets internos predecibles, un \textit{shellcode} se ejecuta desde ubicaciones arbitrarias, desconocidas para sí mismo.
+Una característica fundamental del \textit{shellcode} es que debe estar implementado como \textit{Position-Independent Code} (\acrshort{pic}). Esto implica que el código puede ejecutarse desde cualquier dirección de memoria sin asumir un \textit{entry point} fijo. A diferencia de los programas compilados tradicionalmente —por ejemplo, un binario en C— que comienzan su ejecución en una dirección conocida y pueden referenciar offsets internos predecibles, un \textit{shellcode} se ejecuta desde ubicaciones arbitrarias, desconocidas para sí mismo.
 
 Para funcionar correctamente en este entorno dinámico, el \textit{shellcode} debe ser capaz de determinar en tiempo de ejecución su posición en memoria. En arquitecturas como x86, una técnica clásica para lograrlo es el patrón \texttt{call-pop}, que permite recuperar el valor del contador de programa (\texttt{EIP}):
 
@@ -53,11 +53,11 @@ Esta técnica permite que el \textit{shellcode} utilice rutas relativas para acc
 
 \subsection{Runtime Linking}
 
-Una vez resuelto el problema del \textit{Position Independent Code} (PIC), el siguiente desafío fundamental en el desarrollo de shellcode es cómo invocar código de librerías dinámicas del sistema operativo. Cualquier operación relevante en Windows —como gestionar archivos, crear procesos o interactuar con memoria— requiere acceder a las \textit{system calls} expuestas a través de módulos como \texttt{kernel32.dll}. Sin embargo, en un shellcode no disponemos del trabajo que normalmente realizan el \textit{linker} en tiempo de compilación y el \textit{loader} en tiempo de carga, por lo que debemos reproducir este proceso manualmente durante la ejecución.
+Una vez resuelto el problema del \textit{Position Independent Code} (\acrshort{pic}), el siguiente desafío fundamental en el desarrollo de shellcode es cómo invocar código de librerías dinámicas del sistema operativo. Cualquier operación relevante en Windows —como gestionar archivos, crear procesos o interactuar con memoria— requiere acceder a las \textit{system calls} expuestas a través de módulos como \texttt{kernel32.dll}. Sin embargo, en un shellcode no disponemos del trabajo que normalmente realizan el \textit{linker} en tiempo de compilación y el \textit{loader} en tiempo de carga, por lo que debemos reproducir este proceso manualmente durante la ejecución.
 
-El objetivo principal consiste en localizar módulos cargados en el proceso y resolver las direcciones de sus funciones exportadas en tiempo de ejecución. Para ello recurrimos al \textit{Process Environment Block} (PEB), cuya dirección es mantenida por la CPU en registros dedicados (\texttt{FS:[0x30]} en x86 y \texttt{GS:[0x60]} en x64). Desde el PEB es posible iterar sus estructuras internas, en particular la lista doblemente enlazada \textit{InMemoryOrderModuleList}, que contiene información sobre todos los módulos cargados, incluyendo sus \textit{base addresses}.
+El objetivo principal consiste en localizar módulos cargados en el proceso y resolver las direcciones de sus funciones exportadas en tiempo de ejecución. Para ello recurrimos al \textit{Process Environment Block} (\acrshort{peb}), cuya dirección es mantenida por la CPU en registros dedicados (\texttt{FS:[0x30]} en x86 y \texttt{GS:[0x60]} en x64). Desde el \acrshort{peb} es posible iterar sus estructuras internas, en particular la lista doblemente enlazada \textit{InMemoryOrderModuleList}, que contiene información sobre todos los módulos cargados, incluyendo sus \textit{base addresses}.
 
-Una vez obtenida la base de un módulo concreto, el siguiente paso es analizar sus encabezados PE hasta localizar la \textit{Export Table}. Esta tabla contiene los nombres de las funciones exportadas, sus \textit{ordinals} y, lo más importante, los \textit{Relative Virtual Addresses} (RVAs) que permiten calcular la dirección real de cada función mediante:
+Una vez obtenida la base de un módulo concreto, el siguiente paso es analizar sus encabezados \acrshort{pe} hasta localizar la \textit{Export Table}. Esta tabla contiene los nombres de las funciones exportadas, sus \textit{ordinals} y, lo más importante, los \textit{Relative Virtual Addresses} (\acrshort{rva}s) que permiten calcular la dirección real de cada función mediante:
 
 \[
 \text{func\_addr} = \text{module\_base} + \text{RVA}
@@ -65,7 +65,7 @@ Una vez obtenida la base de un módulo concreto, el siguiente paso es analizar s
 
 Iterando esta tabla hasta encontrar la función deseada, el shellcode puede reconstruir la dirección exacta y, a partir de ese momento, invocar la API igual que lo haría un binario convencional.
 
-Este mecanismo resuelve completamente la problemática del \textit{runtime linking} dentro de un entorno sin información previa como es el shellcode. Para este proyecto se han utilizado implementaciones propias en ensamblador tanto para la obtención del \textit{module base address} a través del PEB, como para la resolución dinámica de funciones exportadas. Dichas implementaciones pueden consultarse en los siguientes repositorios:
+Este mecanismo resuelve completamente la problemática del \textit{runtime linking} dentro de un entorno sin información previa como es el shellcode. Para este proyecto se han utilizado implementaciones propias en ensamblador tanto para la obtención del \textit{module base address} a través del \acrshort{peb}, como para la resolución dinámica de funciones exportadas. Dichas implementaciones pueden consultarse en los siguientes repositorios:
 
 \begin{itemize}
     \item Implementación de \texttt{GetModuleHandle}-like:
@@ -95,7 +95,7 @@ Las implementaciones en ensamblador utilizadas son las siguientes:
 
 \subsection{ABI en x86 y x64}
 
-Finalmente, al trabajar con shellcode es imprescindible respetar las reglas de la \textit{Application Binary Interface} (ABI), especialmente en entornos x64. En esta arquitectura, la pila debe mantenerse alineada a 16 bytes en el momento de realizar una llamada a una función (\texttt{RSP mod 16 = 0}). Además, la convención de llamadas de Windows x64 exige reservar un \textit{shadow space} de 32 bytes antes de invocar cualquier función de una DLL del sistema; si estas condiciones no se cumplen, las llamadas pueden fallar de forma silenciosa o provocar un comportamiento indefinido.
+Finalmente, al trabajar con shellcode es imprescindible respetar las reglas de la \textit{Application Binary Interface} (\acrshort{abi}), especialmente en entornos x64. En esta arquitectura, la pila debe mantenerse alineada a 16 bytes en el momento de realizar una llamada a una función (\texttt{RSP mod 16 = 0}). Además, la convención de llamadas de Windows x64 exige reservar un \textit{shadow space} de 32 bytes antes de invocar cualquier función de una \acrshort{dll} del sistema; si estas condiciones no se cumplen, las llamadas pueden fallar de forma silenciosa o provocar un comportamiento indefinido.
 
 También es necesario considerar la convención de llamadas utilizada para interactuar con las APIs del sistema. En x86, los argumentos se pasan por pila siguiendo un orden \textit{right-to-left}. En x64, los primeros cuatro parámetros se pasan mediante registros (\texttt{RCX}, \texttt{RDX}, \texttt{R8} y \texttt{R9}), mientras que el resto se colocan en la pila respetando la alineación mencionada. Asimismo, la gestión de \textit{stack frames}, la preservación de registros no volátiles y otras tareas que habitualmente realiza el compilador deben ser manejadas explícitamente dentro del shellcode.
 
@@ -103,7 +103,7 @@ Cumplir estrictamente estas normas resulta esencial para garantizar que las func
 
 \subsection{Payloads finales}
 
-Una vez establecidos los tres pilares fundamentales para el desarrollo de shellcode —\textit{Position Independent Code} (PIC), \textit{runtime linking} y respeto de la ABI— es posible construir payloads completamente personalizados desde cero.
+Una vez establecidos los tres pilares fundamentales para el desarrollo de shellcode —\textit{Position Independent Code} (\acrshort{pic}), \textit{runtime linking} y respeto de la \acrshort{abi}— es posible construir payloads completamente personalizados desde cero.
 
 Como recomendación práctica, resulta útil desarrollar primero el programa equivalente en C y compilarlo sin optimizaciones. Esto permite tener una referencia clara de cómo debería verse el comportamiento final y observar directamente cómo el compilador gestiona aspectos como las llamadas a funciones, las variables locales o el uso del stack.
 
@@ -122,8 +122,8 @@ Un payload sencillo cuyo objetivo es mostrar un \textit{message box}. Se ha util
 \paragraph{Reverse Shell payload}
 Este es el \textbf{payload utilizado en la versión final del ataque} descrito en este trabajo. Se trata de la reverse shell empleada durante toda la ejecución práctica del ejercicio Red Team.
 
-Por motivos didácticos, el shellcode de la reverse shell se ha incluido dentro de un fichero PE mínimo para que quede rastro en disco y su análisis resulte más sencillo posteriormente.
-Para generar este PE se ha utilizado la herramienta \texttt{sclauncher} \cite{sclauncher}, que crea únicamente las cabeceras básicas del ejecutable, define una sección \texttt{.text} y coloca en ella el bloque de shellcode. De este modo, el loader de Windows lo mapea correctamente y transfiere la ejecución a la shellcode sin necesidad de estructuras adicionales.
+Por motivos didácticos, el shellcode de la reverse shell se ha incluido dentro de un fichero \acrshort{pe} mínimo para que quede rastro en disco y su análisis resulte más sencillo posteriormente.
+Para generar este \acrshort{pe} se ha utilizado la herramienta \texttt{sclauncher} \cite{sclauncher}, que crea únicamente las cabeceras básicas del ejecutable, define una sección \texttt{.text} y coloca en ella el bloque de shellcode. De este modo, el loader de Windows lo mapea correctamente y transfiere la ejecución a la shellcode sin necesidad de estructuras adicionales.
 
 \begin{itemize}
 \item \textbf{Reverse shell x86 (payload final utilizado en el ataque):} \cite{github-reverseshell-x86}
@@ -133,16 +133,16 @@ Para generar este PE se ha utilizado la herramienta \texttt{sclauncher} \cite{sc
 
 La inyección de código consiste en conseguir que un proceso ejecute instrucciones distintas a las previstas originalmente. Existen múltiples técnicas para lograrlo, pero todas se basan en un principio común: modificar el flujo de ejecución o incorporar código arbitrario dentro del espacio de memoria de un proceso legítimo.
 
-Los métodos clásicos incluyen la reserva de memoria en el proceso objetivo para copiar y ejecutar shellcode, así como la carga forzada de librerías que el binario no tenía previstas. Esta última categoría da lugar a un conjunto amplio de técnicas orientadas a manipular la forma en que Windows resuelve y carga DLLs.
+Los métodos clásicos incluyen la reserva de memoria en el proceso objetivo para copiar y ejecutar shellcode, así como la carga forzada de librerías que el binario no tenía previstas. Esta última categoría da lugar a un conjunto amplio de técnicas orientadas a manipular la forma en que Windows resuelve y carga \acrshort{dll}s.
 
-Dentro de estas técnicas, una de las más relevantes y estudiadas es el DLL Hijacking. 
+Dentro de estas técnicas, una de las más relevantes y estudiadas es el \acrshort{dll} Hijacking. 
 
 \subsection{DLL Hijacking}
 
-El \textit{DLL Hijacking} consiste en forzar que el \textit{loader} de Windows cargue una biblioteca dinámica controlada por el atacante, aprovechando el orden de búsqueda de DLLs o configuraciones del sistema.
+El \textit{\acrshort{dll} Hijacking} consiste en forzar que el \textit{loader} de Windows cargue una biblioteca dinámica controlada por el atacante, aprovechando el orden de búsqueda de \acrshort{dll}s o configuraciones del sistema.
 
 \paragraph{Objetivo principal}  
-Lograr que un ejecutable legítimo cargue una DLL maliciosa con el mismo nombre que una DLL esperada, pero ubicada en una ruta que el atacante controla.
+Lograr que un ejecutable legítimo cargue una \acrshort{dll} maliciosa con el mismo nombre que una \acrshort{dll} esperada, pero ubicada en una ruta que el atacante controla.
 
 \subsubsection{Orden de carga de DLLs en Windows}
 
@@ -153,41 +153,41 @@ El \textit{loader} resuelve las dependencias siguiendo el siguiente orden:
     \item \texttt{C:\textbackslash Windows\textbackslash System32}
     \item \texttt{C:\textbackslash Windows\textbackslash System}
     \item \texttt{C:\textbackslash Windows}
-    \item Directorio de trabajo actual (CWD).
+    \item Directorio de trabajo actual (\acrshort{cwd}).
     \item Directorios definidos en la variable de entorno \texttt{PATH} del sistema.
     \item Directorios definidos en la variable de entorno \texttt{PATH} del usuario.
 \end{enumerate}
 
 \subsubsection{KnownDLLs — Restricción crítica}
 
-Las DLL listadas en:
+Las \acrshort{dll} listadas en:
 
 \begin{verbatim}
 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\
 Session Manager\KnownDLLs
 \end{verbatim}
 
-solo pueden cargarse desde \texttt{System32}, lo que imposibilita su secuestro mediante \textit{DLL Hijacking} tradicional.
+solo pueden cargarse desde \texttt{System32}, lo que imposibilita su secuestro mediante \textit{\acrshort{dll} Hijacking} tradicional.
 
 \section{Weaponización de DLL Hijacking} \label{sec:weaponizacion-dll}
 \label{sec:dll-hijacking}
 
-Para transformar este mecanismo en una técnica ofensiva se emplean tres enfoques complementarios: \textit{Side Loading}, \textit{DLL Proxying} y \textit{Reflective Loading}.
+Para transformar este mecanismo en una técnica ofensiva se emplean tres enfoques complementarios: \textit{Side Loading}, \textit{\acrshort{dll} Proxying} y \textit{Reflective Loading}.
 
-En el ataque desarrollado en este trabajo se explota la aplicación legítima \textit{Calibre} y, en concreto, su librería \texttt{calibre-launcher.dll}. La vulnerabilidad asociada a esta DLL está documentada en la plataforma \textit{HijackLibs} \cite{hijacklibs-calibre-launcher}, que mantiene un catálogo actualizado de DLLs susceptibles de ser secuestradas.
+En el ataque desarrollado en este trabajo se explota la aplicación legítima \textit{Calibre} y, en concreto, su librería \texttt{calibre-launcher.dll}. La vulnerabilidad asociada a esta \acrshort{dll} está documentada en la plataforma \textit{HijackLibs} \cite{hijacklibs-calibre-launcher}, que mantiene un catálogo actualizado de \acrshort{dll}s susceptibles de ser secuestradas.
 
-El objetivo es conseguir que un ejecutable legítimo, ya presente en el sistema, cargue una DLL bajo control del atacante. En este escenario, la DLL maliciosa actúa como stage 2 del ataque. Su cometido es establecer una conexión con el C2 y descargar la carga final: una DLL que contiene un implante de Sliver. Esta DLL descargada no se escribe en disco en ningún momento; la propia DLL maliciosa la carga directamente en memoria mediante reflective loading y transfiere la ejecución al implante. De este modo, un proceso legítimo termina ejecutando código malicioso sin dejar artefactos en el sistema de archivos.
+El objetivo es conseguir que un ejecutable legítimo, ya presente en el sistema, cargue una \acrshort{dll} bajo control del atacante. En este escenario, la \acrshort{dll} maliciosa actúa como stage 2 del ataque. Su cometido es establecer una conexión con el \acrshort{c2} y descargar la carga final: una \acrshort{dll} que contiene un implante de Sliver. Esta \acrshort{dll} descargada no se escribe en disco en ningún momento; la propia \acrshort{dll} maliciosa la carga directamente en memoria mediante reflective loading y transfiere la ejecución al implante. De este modo, un proceso legítimo termina ejecutando código malicioso sin dejar artefactos en el sistema de archivos.
 
 De este modo, se consigue que un proceso legítimo —en este caso, \textit{Calibre}— ejecute dentro de su propio espacio de direcciones un \textit{implant} de \textit{Sliver}, manteniendo la operación completamente \textit{fileless}.
 
 % -----------------------------------------------------------
 \subsection{Side Loading}
 
-El primer objetivo es conseguir que un ejecutable legítimo cargue nuestra DLL maliciosa. La técnica de \textit{Side Loading} se basa en colocar una DLL bajo control del atacante en el mismo directorio que el ejecutable objetivo, utilizando exactamente el mismo nombre que la DLL legítima que el programa espera cargar. Para ello, es necesario identificar previamente aplicaciones vulnerables a este tipo de \textit{DLL Hijacking}.
+El primer objetivo es conseguir que un ejecutable legítimo cargue nuestra \acrshort{dll} maliciosa. La técnica de \textit{Side Loading} se basa en colocar una \acrshort{dll} bajo control del atacante en el mismo directorio que el ejecutable objetivo, utilizando exactamente el mismo nombre que la \acrshort{dll} legítima que el programa espera cargar. Para ello, es necesario identificar previamente aplicaciones vulnerables a este tipo de \textit{\acrshort{dll} Hijacking}.
 
-Una limitación habitual es que los directorios donde residen los binarios legítimos no permiten la escritura por parte de usuarios sin privilegios elevados, lo que impide introducir la DLL maliciosa directamente. No obstante, estos directorios sí permiten lectura, de modo que el atacante puede copiar el ejecutable legítimo a una ubicación donde sí disponga de permisos de escritura y, posteriormente, insertar allí la DLL manipulada.
+Una limitación habitual es que los directorios donde residen los binarios legítimos no permiten la escritura por parte de usuarios sin privilegios elevados, lo que impide introducir la \acrshort{dll} maliciosa directamente. No obstante, estos directorios sí permiten lectura, de modo que el atacante puede copiar el ejecutable legítimo a una ubicación donde sí disponga de permisos de escritura y, posteriormente, insertar allí la \acrshort{dll} manipulada.
 
-Una vez trasladado el ejecutable a un directorio controlado, basta con colocar la DLL maliciosa con el mismo nombre que la DLL legítima requerida por el programa. De este modo, al ejecutarse, el binario cargará la versión maliciosa en lugar de la original.
+Una vez trasladado el ejecutable a un directorio controlado, basta con colocar la \acrshort{dll} maliciosa con el mismo nombre que la \acrshort{dll} legítima requerida por el programa. De este modo, al ejecutarse, el binario cargará la versión maliciosa en lugar de la original.
 
 Por ejemplo, es posible copiar los archivos de la aplicación a un directorio menos restrictivo mediante:
 
@@ -201,18 +201,18 @@ robocopy "C:\Program Files\Calibre2" ^
 % -----------------------------------------------------------
 \subsection{DLL Proxying}
 
-Con la técnica de \textit{Side Loading} hemos logrado que un ejecutable legítimo cargue una DLL maliciosa. Sin embargo, esto introduce un nuevo problema: al sustituir la DLL original, el programa deja de disponer de las funciones que necesita para funcionar correctamente. Si la DLL maliciosa no reproduce esas exportaciones, la aplicación fallará o directamente no arrancará.
+Con la técnica de \textit{Side Loading} hemos logrado que un ejecutable legítimo cargue una \acrshort{dll} maliciosa. Sin embargo, esto introduce un nuevo problema: al sustituir la \acrshort{dll} original, el programa deja de disponer de las funciones que necesita para funcionar correctamente. Si la \acrshort{dll} maliciosa no reproduce esas exportaciones, la aplicación fallará o directamente no arrancará.
 
-Para resolver este problema se utiliza \textit{DLL Proxying}. Esta técnica consiste en compilar una DLL maliciosa que:
+Para resolver este problema se utiliza \textit{\acrshort{dll} Proxying}. Esta técnica consiste en compilar una \acrshort{dll} maliciosa que:
 
 \begin{itemize}
 \item Ejecuta las operaciones ofensivas necesarias (en nuestro caso, cargar en memoria el implante final).
-\item Mantiene toda la funcionalidad original de la DLL legítima, reenviando sus exportaciones reales.
+\item Mantiene toda la funcionalidad original de la \acrshort{dll} legítima, reenviando sus exportaciones reales.
 \end{itemize}
 
 \subsubsection*{Ficheros \texttt{.def}}
 
-Para que una DLL maliciosa actúe como sustituta de otra es necesario replicar exactamente sus exportaciones. Esto se consigue mediante un fichero \texttt{.def} (Module Definition File), que permite definir explícitamente qué funciones expone la DLL y, opcionalmente, redirigir cada una a otra DLL.
+Para que una \acrshort{dll} maliciosa actúe como sustituta de otra es necesario replicar exactamente sus exportaciones. Esto se consigue mediante un fichero \texttt{.def} (Module Definition File), que permite definir explícitamente qué funciones expone la \acrshort{dll} y, opcionalmente, redirigir cada una a otra \acrshort{dll}.
 
 La estructura básica de un fichero \texttt{.def} es:
 
@@ -225,7 +225,7 @@ FuncC = real-old.FuncC @3
 Cada línea indica:
 
 \begin{itemize}
-\item el nombre que exporta la DLL maliciosa,
+\item el nombre que exporta la \acrshort{dll} maliciosa,
 \item la función real a la que se redirige,
 \item y el ordinal asociado.
 \end{itemize}
@@ -233,13 +233,13 @@ Cada línea indica:
 El ordinal debe conservarse porque algunos programas importan funciones por número en lugar de por nombre.
 
 Durante el proyecto se utilizó un script en Python para generar automáticamente estos ficheros \texttt{.def}. El script está disponible en \cite{exports_py}.
-Asimismo, puede encontrarse una demostración completa de \textit{Side Loading} + \textit{DLL Proxying} en \cite{dll_proxy_demo}.
+Asimismo, puede encontrarse una demostración completa de \textit{Side Loading} + \textit{\acrshort{dll} Proxying} en \cite{dll_proxy_demo}.
 
-En esa prueba de concepto se crea un ejecutable que importa tres funciones (\texttt{FuncA}, \texttt{FuncB}, \texttt{FuncC}) y una DLL legítima que las implementa. La DLL maliciosa se compila de forma que:
+En esa prueba de concepto se crea un ejecutable que importa tres funciones (\texttt{FuncA}, \texttt{FuncB}, \texttt{FuncC}) y una \acrshort{dll} legítima que las implementa. La \acrshort{dll} maliciosa se compila de forma que:
 
 \begin{itemize}
 \item exporta su propia versión de \texttt{FuncA} (donde podría incluirse cualquier lógica ofensiva),
-\item redirige \texttt{FuncB} y \texttt{FuncC} a la DLL real mediante el fichero \texttt{proxy.def}.
+\item redirige \texttt{FuncB} y \texttt{FuncC} a la \acrshort{dll} real mediante el fichero \texttt{proxy.def}.
 \end{itemize}
 
 Una compilación típica sería:
@@ -249,17 +249,17 @@ x86_64-w64-mingw32-gcc -shared -o bin/malicious.dll
 dll-malicious.c proxy.def -s
 \end{verbatim}
 
-Para finalizar la demostración, basta con renombrar \texttt{malicious.dll} a \texttt{dll-real.dll} y colocarlo junto al ejecutable vulnerable: en ese momento, \textit{Side Loading} y \textit{DLL Proxying} quedan operativos.
+Para finalizar la demostración, basta con renombrar \texttt{malicious.dll} a \texttt{dll-real.dll} y colocarlo junto al ejecutable vulnerable: en ese momento, \textit{Side Loading} y \textit{\acrshort{dll} Proxying} quedan operativos.
 
-El resultado es similar a un \textit{man-in-the-middle} dentro del propio mecanismo de carga de DLLs: el programa cree estar usando la DLL legítima, pero en realidad está ejecutando código controlado por el atacante mientras conserva su funcionalidad original.
+El resultado es similar a un \textit{man-in-the-middle} dentro del propio mecanismo de carga de \acrshort{dll}s: el programa cree estar usando la \acrshort{dll} legítima, pero en realidad está ejecutando código controlado por el atacante mientras conserva su funcionalidad original.
 % -----------------------------------------------------------
 \subsection{Reflective Loading}
 
-Una vez logramos que un proceso legítimo cargue una DLL maliciosa sin alterar su flujo normal, el siguiente paso es introducir la carga ofensiva real. En este escenario, el objetivo es cargar una DLL directamente en el espacio de direcciones del proceso, sin que exista físicamente en disco.
+Una vez logramos que un proceso legítimo cargue una \acrshort{dll} maliciosa sin alterar su flujo normal, el siguiente paso es introducir la carga ofensiva real. En este escenario, el objetivo es cargar una \acrshort{dll} directamente en el espacio de direcciones del proceso, sin que exista físicamente en disco.
 
-Windows impone una limitación importante: las DLL solo pueden cargarse mediante las APIs estándar (\texttt{LoadLibrary} y derivados), las cuales requieren que el archivo exista en el sistema de ficheros. La técnica de \textit{Reflective Loading} evita esta restricción cargando la DLL íntegramente desde memoria. De este modo, es posible ejecutar código arbitrario sin generar artefactos en disco, reduciendo la exposición a firmas estáticas y detecciones basadas en \textit{file scanning}.
+Windows impone una limitación importante: las \acrshort{dll} solo pueden cargarse mediante las APIs estándar (\texttt{LoadLibrary} y derivados), las cuales requieren que el archivo exista en el sistema de ficheros. La técnica de \textit{Reflective Loading} evita esta restricción cargando la \acrshort{dll} íntegramente desde memoria. De este modo, es posible ejecutar código arbitrario sin generar artefactos en disco, reduciendo la exposición a firmas estáticas y detecciones basadas en \textit{file scanning}.
 
-Como referencia, se ha desarrollado una demostración en C que implementa la carga manual de una DLL sin utilizar las funciones estándar del sistema~\cite{walkingloader}. El código puede consultarse en el repositorio mencionado.
+Como referencia, se ha desarrollado una demostración en C que implementa la carga manual de una \acrshort{dll} sin utilizar las funciones estándar del sistema~\cite{walkingloader}. El código puede consultarse en el repositorio mencionado.
 
 \subsubsection*{Proceso de carga reflectiva}
 \label{sec:reflective}
@@ -267,28 +267,28 @@ Como referencia, se ha desarrollado una demostración en C que implementa la car
 Para implementar \textit{Reflective Loading}, el programa debe llevar a cabo las siguientes etapas:
 
 \begin{enumerate}
-    \item \textbf{Preparar la DLL en memoria.}  
-    El archivo PE de la DLL debe estar ya cargado en memoria, normalmente como un bloque continuo de bytes.
+    \item \textbf{Preparar la \acrshort{dll} en memoria.}  
+    El archivo \acrshort{pe} de la \acrshort{dll} debe estar ya cargado en memoria, normalmente como un bloque continuo de bytes.
 
     \item \textbf{Procesar las cabeceras.}  
-    Se interpretan las estructuras PE iniciales para obtener información crítica, incluyendo el tamaño total que ocupará la DLL en memoria (\texttt{IMAGE\_OPTIONAL\_HEADER64.SizeOfImage}).
+    Se interpretan las estructuras \acrshort{pe} iniciales para obtener información crítica, incluyendo el tamaño total que ocupará la \acrshort{dll} en memoria (\texttt{IMAGE\_OPTIONAL\_HEADER64.SizeOfImage}).
 
-    \item \textbf{Reservar memoria para la DLL.}  
-    Se solicita al proceso un bloque de memoria con el tamaño indicado por \texttt{SizeOfImage}, donde se cargará la DLL reconstruida.
+    \item \textbf{Reservar memoria para la \acrshort{dll}.}  
+    Se solicita al proceso un bloque de memoria con el tamaño indicado por \texttt{SizeOfImage}, donde se cargará la \acrshort{dll} reconstruida.
 
     \item \textbf{Copiar las cabeceras.}  
-    Las cabeceras del PE se copian al nuevo bloque de memoria, ya que algunas estructuras deberán ser modificadas durante la carga.
+    Las cabeceras del \acrshort{pe} se copian al nuevo bloque de memoria, ya que algunas estructuras deberán ser modificadas durante la carga.
 
     \item \textbf{Mapear las secciones.}  
     Utilizando \texttt{IMAGE\_FIRST\_SECTION}, se obtiene la dirección del primer \texttt{IMAGE\_SECTION\_HEADER}.  
     Para cada sección:
     \begin{itemize}
-        \item Se leen los offsets y tamaños desde el PE en memoria.
-        \item Se copian los datos a la ubicación adecuada dentro del bloque reservado, respetando el RVA definido en las cabeceras.
+        \item Se leen los offsets y tamaños desde el \acrshort{pe} en memoria.
+        \item Se copian los datos a la ubicación adecuada dentro del bloque reservado, respetando el \acrshort{rva} definido en las cabeceras.
     \end{itemize}
 
     \item \textbf{Resolver la tabla de importaciones.}  
-    La estructura \texttt{IMAGE\_IMPORT\_DESCRIPTOR} define los módulos y funciones requeridos por la DLL.  
+    La estructura \texttt{IMAGE\_IMPORT\_DESCRIPTOR} define los módulos y funciones requeridos por la \acrshort{dll}.  
     Para cada módulo importado:
     \begin{itemize}
         \item Se comprueba si ya está cargado en el proceso; si no, se carga.
@@ -297,29 +297,29 @@ Para implementar \textit{Reflective Loading}, el programa debe llevar a cabo las
         \begin{itemize}
             \item El nombre de la función se obtiene de la estructura original.
             \item Se localiza su dirección en el módulo cargado.
-            \item Se escribe esa dirección en la IAT reconstruida.
+            \item Se escribe esa dirección en la \acrshort{iat} reconstruida.
         \end{itemize}
     \end{itemize}
-    Esto garantiza que, cuando la DLL cargada reflectivamente invoque funciones externas, las llamadas apunten a direcciones válidas.
+    Esto garantiza que, cuando la \acrshort{dll} cargada reflectivamente invoque funciones externas, las llamadas apunten a direcciones válidas.
 
     \item \textbf{(Opcional) Aplicar relocaciones.}  
-    Si la DLL no se carga en su \texttt{ImageBase} preferido, deben procesarse las entradas de la tabla de relocaciones.  
+    Si la \acrshort{dll} no se carga en su \texttt{ImageBase} preferido, deben procesarse las entradas de la tabla de relocaciones.  
     En esta explicación se omite por simplicidad, aunque sería necesario en una implementación completa.
 
     \item \textbf{Invocar \texttt{DllMain}.}  
-    Con la DLL completamente mapeada en memoria y las dependencias resueltas, solo queda ejecutar:  
+    Con la \acrshort{dll} completamente mapeada en memoria y las dependencias resueltas, solo queda ejecutar:  
     \texttt{DllMain(baseAddress, DLL\_PROCESS\_ATTACH, NULL);}  
 \end{enumerate}
 
-En este punto, la DLL queda cargada y ejecutándose íntegramente desde memoria, sin intervención de las APIs estándar de Windows y sin necesidad de que exista como archivo en disco.
+En este punto, la \acrshort{dll} queda cargada y ejecutándose íntegramente desde memoria, sin intervención de las APIs estándar de Windows y sin necesidad de que exista como archivo en disco.
 
-Esta sección no pretende ofrecer una explicación completamente sistemática de la técnica, sino proporcionar una visión operativa que permita comprender sus fundamentos. Para profundizar en el funcionamiento interno del proceso, se recomienda revisar en el anexo la sección dedicada a los ficheros PE, así como examinar detenidamente el código fuente del repositorio \cite{walkingloader}. En dicha implementación se emplean las estructuras oficiales definidas en \texttt{winnt.h}, por lo que resulta especialmente útil comparar estas estructuras con los offsets y campos especificados en la documentación del formato PE. Para ello, puede consultarse la infografía técnica incluida en \cite{peinfografia}, lo que facilita relacionar las estructuras utilizadas en la implementación con sus equivalentes formales dentro del estándar PE definido por Microsoft.
+Esta sección no pretende ofrecer una explicación completamente sistemática de la técnica, sino proporcionar una visión operativa que permita comprender sus fundamentos. Para profundizar en el funcionamiento interno del proceso, se recomienda revisar en el anexo la sección dedicada a los ficheros \acrshort{pe}, así como examinar detenidamente el código fuente del repositorio \cite{walkingloader}. En dicha implementación se emplean las estructuras oficiales definidas en \texttt{winnt.h}, por lo que resulta especialmente útil comparar estas estructuras con los offsets y campos especificados en la documentación del formato \acrshort{pe}. Para ello, puede consultarse la infografía técnica incluida en \cite{peinfografia}, lo que facilita relacionar las estructuras utilizadas en la implementación con sus equivalentes formales dentro del estándar \acrshort{pe} definido por Microsoft.
 
 \section{Syscalls y evasión de EDR} \label{sec:syscalls}
 
-En este punto del ataque, el implante ya está completamente desplegado: se ejecuta en el sistema comprometido, mantiene comunicación estable con el C2 y está preparado para iniciar técnicas de post-explotación. Antes de avanzar, es imprescindible comprender los mecanismos modernos de detección utilizados por soluciones EDR, especialmente aquellos basados en \textit{hooking} de APIs.
+En este punto del ataque, el implante ya está completamente desplegado: se ejecuta en el sistema comprometido, mantiene comunicación estable con el \acrshort{c2} y está preparado para iniciar técnicas de post-explotación. Antes de avanzar, es imprescindible comprender los mecanismos modernos de detección utilizados por soluciones \acrshort{edr}, especialmente aquellos basados en \textit{hooking} de APIs.
 
-Los EDR actuales instrumentan funciones críticas de \texttt{kernel32.dll}, \texttt{kernelbase.dll} y \texttt{ntdll.dll} mediante \textbf{API hooking}. De este modo, cada vez que el implante invoca funciones como \texttt{CreateProcessW}, \texttt{VirtualAllocEx}, \texttt{NtWriteVirtualMemory} o similares, el EDR intercepta la llamada, analiza los parámetros y decide si permitir, alertar o bloquear la operación.
+Los \acrshort{edr} actuales instrumentan funciones críticas de \texttt{kernel32.dll}, \texttt{kernelbase.dll} y \texttt{ntdll.dll} mediante \textbf{API hooking}. De este modo, cada vez que el implante invoca funciones como \texttt{CreateProcessW}, \texttt{VirtualAllocEx}, \texttt{NtWriteVirtualMemory} o similares, el \acrshort{edr} intercepta la llamada, analiza los parámetros y decide si permitir, alertar o bloquear la operación.
 
 Para minimizar la superficie de detección, los operadores utilizan diferentes grados de interacción directa con el sistema operativo. Estos niveles pueden organizarse en cuatro categorías progresivas, desde las API de mayor visibilidad hasta técnicas de evasión más avanzadas.
 
@@ -329,7 +329,7 @@ Para minimizar la superficie de detección, los operadores utilizan diferentes g
 \item Conjunto de funciones de alto nivel diseñadas para desarrollo estándar.
 \item Ejemplos típicos: \texttt{CreateFileW}, \texttt{VirtualAllocEx}, \texttt{WriteProcessMemory}.
 \item Resueltas estática o dinámicamente desde \texttt{kernel32.dll} o \texttt{kernelbase.dll}.
-\item Constituyen el nivel más monitorizado: cualquier EDR comercial detecta su uso de forma prácticamente completa.
+\item Constituyen el nivel más monitorizado: cualquier \acrshort{edr} comercial detecta su uso de forma prácticamente completa.
 \end{itemize}
 
 \cite{ref:win32api} – Demo de uso Win32 API.  
@@ -340,7 +340,7 @@ Para minimizar la superficie de detección, los operadores utilizan diferentes g
 \item Funciones de bajo nivel exportadas por \texttt{ntdll.dll}.
 \item Siguen el prefijo \texttt{Nt} o \texttt{Zw}, como \texttt{NtCreateFile} o \texttt{NtAllocateVirtualMemory}.
 \item Representan los \textit{wrappers} oficiales en espacio de usuario que preparan los registros y ejecutan la instrucción \texttt{syscall}.
-\item Aunque ofrecen mayor control, muchos EDR siguen aplicando \textit{hooks} sobre estas funciones críticas.
+\item Aunque ofrecen mayor control, muchos \acrshort{edr} siguen aplicando \textit{hooks} sobre estas funciones críticas.
 \end{itemize}
 
 \cite{ref:nativeapi} – Implementación de Native API para evitar hooks.  
@@ -349,8 +349,8 @@ Para minimizar la superficie de detección, los operadores utilizan diferentes g
 
 \begin{itemize}
 \item Eliminan por completo la dependencia de \texttt{ntdll.dll}.
-\item El operador carga manualmente el \textbf{System Service Number} (SSN) en \texttt{RAX} (x64) o \texttt{EAX} (x86) y ejecuta \texttt{syscall}.
-\item El SSN varía entre versiones y compilaciones de Windows, lo cual requiere enumeración dinámica o bases de datos específicas por build.
+\item El operador carga manualmente el \textbf{System Service Number} (\acrshort{ssn}) en \texttt{RAX} (x64) o \texttt{EAX} (x86) y ejecuta \texttt{syscall}.
+\item El \acrshort{ssn} varía entre versiones y compilaciones de Windows, lo cual requiere enumeración dinámica o bases de datos específicas por build.
 \item Ejemplo habitual para \texttt{NtAllocateVirtualMemory}:
 \begin{lstlisting}[language=C]
 NtAllocateVirtualMemory PROC
@@ -360,7 +360,7 @@ syscall
 ret
 NtAllocateVirtualMemory ENDP
 \end{lstlisting}
-\item Los EDR modernos pueden detectar esta técnica comparando el origen de la instrucción \texttt{syscall} mediante ETW/ETW-TI, ya que no proviene de \texttt{ntdll.dll}.
+\item Los \acrshort{edr} modernos pueden detectar esta técnica comparando el origen de la instrucción \texttt{syscall} mediante \acrshort{etw}/\acrshort{etw}-TI, ya que no proviene de \texttt{ntdll.dll}.
 \end{itemize}
 
 \cite{ref:directsyscalls} – Ejemplo de Direct Syscalls en Windows.  
@@ -380,14 +380,14 @@ mov eax, 18h
 jmp QWORD PTR [sysAddrNtAllocateVirtualMemory]
 NtAllocateVirtualMemory ENDP
 \end{lstlisting}
-\item Desde la perspectiva del EDR (y de ETW), la instrucción \texttt{syscall} parece ejecutarse dentro de \texttt{ntdll.dll}, lo que la vuelve extremadamente difícil de detectar sin medidas basadas en telemetría avanzada o heurísticas de integridad de memoria.
+\item Desde la perspectiva del \acrshort{edr} (y de \acrshort{etw}), la instrucción \texttt{syscall} parece ejecutarse dentro de \texttt{ntdll.dll}, lo que la vuelve extremadamente difícil de detectar sin medidas basadas en telemetría avanzada o heurísticas de integridad de memoria.
 \end{itemize}
 
 \cite{ref:indirectsyscalls} – Ejemplo de Indirect Syscalls en Windows.
 
-Librerías como HellGate, HaloGate, Freshycalls y SysWhispers3 automatizan la ejecución de direct e indirect syscalls para evadir hooks de EDR en ntdll.dll. Resuelven los SSN y direcciones en tiempo de compilación o carga, generan stubs limpios o reutilizan gadgets legítimos terminados en syscall; ret dentro de secciones no hookeadas de ntdll.dll (técnicas Hell’s Gate, Halo’s Gate y Tartarus’ Gate), permitiendo llamar syscalls sin tocar las funciones exportadas monitorizadas y sin escribir ensamblador manualmente.
+Librerías como HellGate, HaloGate, Freshycalls y SysWhispers3 automatizan la ejecución de direct e indirect syscalls para evadir hooks de \acrshort{edr} en ntdll.dll. Resuelven los \acrshort{ssn} y direcciones en tiempo de compilación o carga, generan stubs limpios o reutilizan gadgets legítimos terminados en syscall; ret dentro de secciones no hookeadas de ntdll.dll (técnicas Hell’s Gate, Halo’s Gate y Tartarus’ Gate), permitiendo llamar syscalls sin tocar las funciones exportadas monitorizadas y sin escribir ensamblador manualmente.
 
-Aunque en esta primera versión del ataque no se han empleado \textit{syscalls} directas ni técnicas de \textit{syscall bypass}, entender cómo funcionan los \textit{hooks} en \texttt{ntdll.dll} y las formas de evitarlos es esencial. Estas capacidades son clave para reducir la visibilidad frente a EDR y serán necesarias en futuras versiones del ataque.
+Aunque en esta primera versión del ataque no se han empleado \textit{syscalls} directas ni técnicas de \textit{syscall bypass}, entender cómo funcionan los \textit{hooks} en \texttt{ntdll.dll} y las formas de evitarlos es esencial. Estas capacidades son clave para reducir la visibilidad frente a \acrshort{edr} y serán necesarias en futuras versiones del ataque.
 
 \section{Persistencia} \label{sec:persistencia}
 
@@ -399,7 +399,7 @@ Entre las técnicas más comunes destacan:
     \item \textbf{Servicios} configurados para iniciarse automáticamente.
     \item \textbf{Tareas programadas} creadas mediante \texttt{schtasks}.
     \item \textbf{Elementos del menú \textit{Start-up}} o carpetas de inicio.
-    \item \textbf{DLL Hijacking}, aprovechando ejecutables que cargan librerías sin rutas absolutas; si el binario vulnerable se ejecuta al iniciar el sistema.
+    \item \textbf{\acrshort{dll} Hijacking}, aprovechando ejecutables que cargan librerías sin rutas absolutas; si el binario vulnerable se ejecuta al iniciar el sistema.
 \end{itemize}
 
 Aunque el ecosistema de técnicas de persistencia es amplio, en este ataque se optó por un método sencillo, 
@@ -426,16 +426,16 @@ mantenimiento del sistema, lo que reduce la probabilidad de detección durante u
 \section{Infraestructura C2} \label{sec:c2}
 \label{sec:infraestructura}
 
-La infraestructura del atacante se despliega en \textbf{AWS} para mantener aislamiento y control sobre todo el flujo operacional. Se divide en varios servicios independientes con el fin de separar funciones, reducir riesgos y evitar exponer directamente el servidor C2 principal. Sliver, además, incorpora técnicas de \textit{anti-fingerprinting} que dificultan identificar el servidor como infraestructura maliciosa.
+La infraestructura del atacante se despliega en \textbf{AWS} para mantener aislamiento y control sobre todo el flujo operacional. Se divide en varios servicios independientes con el fin de separar funciones, reducir riesgos y evitar exponer directamente el servidor \acrshort{c2} principal. Sliver, además, incorpora técnicas de \textit{anti-fingerprinting} que dificultan identificar el servidor como infraestructura maliciosa.
 
 Exponer una \textit{reverse shell} a Internet implica riesgos evidentes —interceptación, reutilización de la sesión o identificación del origen—, pero en este caso el sistema que la recibe es desechable, por lo que no se requiere una protección compleja. Aun así, existen alternativas comunes como túneles efímeros o proxys temporales.
 
 La arquitectura se organiza en tres componentes diferenciados:
 
 \begin{itemize}
-    \item \textbf{Servidor de entrega de payloads (CDN):} Aloja los binarios del \textit{stage 2} y actúa como punto inicial de descarga. Su objetivo es evitar que el implante o los artefactos iniciales apunten directamente al C2 real.
+    \item \textbf{Servidor de entrega de payloads (\acrshort{cdn}):} Aloja los binarios del \textit{stage 2} y actúa como punto inicial de descarga. Su objetivo es evitar que el implante o los artefactos iniciales apunten directamente al \acrshort{c2} real.
     \item \textbf{Servidor para la reverse shell:} Máquina temporal usada exclusivamente para recibir la sesión interactiva del \textit{stage 1}. Permite al atacante ejecutar comandos básicos y preparar la instalación del implante principal.
-    \item \textbf{Servidor C2 del implante (Sliver):} Nodo dedicado a gestionar la comunicación segura del \textit{stage 2}. Controla tareas, módulos, telemetría y persistencia del implante. Al mantenerse separado del flujo inicial, reduce significativamente la superficie de exposición.
+    \item \textbf{Servidor \acrshort{c2} del implante (Sliver):} Nodo dedicado a gestionar la comunicación segura del \textit{stage 2}. Controla tareas, módulos, telemetría y persistencia del implante. Al mantenerse separado del flujo inicial, reduce significativamente la superficie de exposición.
 \end{itemize}
 
 \section{Acciones finales} \label{sec:acciones-finales}
@@ -444,32 +444,32 @@ La arquitectura se organiza en tres componentes diferenciados:
 Una vez que el implante obtiene ejecución en el proceso comprometido, el atacante puede llevar a cabo distintas acciones finales para ejecutar código adicional en memoria. Estas técnicas permiten cargar nuevo payload sin necesidad de escribir artefactos en disco, manteniendo un perfil sigiloso. Entre las opciones más comunes se encuentran:
 
 \subsection{BOF y COFF}
-Los \textit{Beacon Object Files} (BOF) y los \textit{Common Object File Format} (COFF) son archivos \texttt{.obj} generados por el compilador de C pero no vinculados (\textit{unlinked}).  
+Los \textit{Beacon Object Files} (\acrshort{bof}) y los \textit{Common Object File Format} (\acrshort{coff}) son archivos \texttt{.obj} generados por el compilador de C pero no vinculados (\textit{unlinked}).  
 Estos objetos pueden ser cargados directamente en memoria por el implante, permitiendo ejecutar código nativo sin necesidad de crear un ejecutable completo.  
 Su formato compacto y la ausencia de dependencias externas los hace ideales para operaciones sigilosas en memoria.
 
 \subsection{Shared Library Side Loading}
 El implante puede cargar bibliotecas dinámicas de forma reflexiva, sin utilizar las funciones estándar del sistema operativo.  
-Este método, similar al empleado en el \textit{stage 2} del ataque, permite mapear la DLL directamente en memoria, resolver sus símbolos manualmente y ejecutar su código sin registrarla en el cargador de Windows.  
-El \textit{side loading} facilita también la suplantación de DLLs legítimas para redirigir el flujo de ejecución hacia código malicioso.
+Este método, similar al empleado en el \textit{stage 2} del ataque, permite mapear la \acrshort{dll} directamente en memoria, resolver sus símbolos manualmente y ejecutar su código sin registrarla en el cargador de Windows.  
+El \textit{side loading} facilita también la suplantación de \acrshort{dll}s legítimas para redirigir el flujo de ejecución hacia código malicioso.
 
 \subsection{Assemblies .NET}
 
-En el contexto de nuestro proyecto, los \textit{assemblies} de \texttt{.NET} constituyen el mecanismo elegido para cargar y ejecutar código adicional dentro del propio implante. Windows inicializa una serie de procesos y servicios críticos para gestionar el sistema operativo, entre ellos el \textit{Common Language Runtime (CLR)} en entornos donde se utilizan aplicaciones \texttt{.NET}. Aprovechar este componente nos permite inyectar y ejecutar código gestionado de forma sigilosa y flexible.
+En el contexto de nuestro proyecto, los \textit{assemblies} de \texttt{.NET} constituyen el mecanismo elegido para cargar y ejecutar código adicional dentro del propio implante. Windows inicializa una serie de procesos y servicios críticos para gestionar el sistema operativo, entre ellos el \textit{Common Language Runtime (\acrshort{clr})} en entornos donde se utilizan aplicaciones \texttt{.NET}. Aprovechar este componente nos permite inyectar y ejecutar código gestionado de forma sigilosa y flexible.
 
 El implante está limitado al uso de \texttt{.NET Framework}, debido a las restricciones propias de Sliver. Es importante distinguirlo de \texttt{.NET Core / .NET 5+}, ya que sus características difieren notablemente:
 
 \begin{itemize}
-    \item \textbf{.NET Framework (v4.x):} Orientado exclusivamente a Windows. No permite compilación cruzada, por lo que los assemblies deben generarse específicamente para esta plataforma. Aunque Windows incluye el CLR, en Sliver el runtime debe ser cargado manualmente por el implante mediante técnicas de \textit{runtime hosting}, permitiendo ejecutar assemblies incluso en procesos que no habían inicializado previamente un entorno gestionado.
+    \item \textbf{.NET Framework (v4.x):} Orientado exclusivamente a Windows. No permite compilación cruzada, por lo que los assemblies deben generarse específicamente para esta plataforma. Aunque Windows incluye el \acrshort{clr}, en Sliver el runtime debe ser cargado manualmente por el implante mediante técnicas de \textit{runtime hosting}, permitiendo ejecutar assemblies incluso en procesos que no habían inicializado previamente un entorno gestionado.
     \item \textbf{.NET Core / .NET 5+:} Multiplataforma y modular. A diferencia del Framework clásico, el payload puede **transportar su propio runtime**, permitiendo la ejecución sin depender de componentes instalados en el sistema objetivo. Está diseñado para entornos modernos y despliegues autocontenidos.
 \end{itemize}
 
-Un \textit{assembly} \texttt{.NET} es esencialmente un contenedor que agrupa código compilado en \textbf{Intermediate Language (IL)}, un bytecode similar conceptualmente al de Java. Este IL no se ejecuta directamente, sino que es interpretado y gestionado por el \textit{Common Language Runtime}. Esto implica que cuando compilamos un proyecto en C\# no obtenemos código máquina, sino un lenguaje intermedio que será ejecutado por el CLR del \texttt{.NET Framework}.
+Un \textit{assembly} \texttt{.NET} es esencialmente un contenedor que agrupa código compilado en \textbf{Intermediate Language (\acrshort{il})}, un bytecode similar conceptualmente al de Java. Este \acrshort{il} no se ejecuta directamente, sino que es interpretado y gestionado por el \textit{Common Language Runtime}. Esto implica que cuando compilamos un proyecto en C\# no obtenemos código máquina, sino un lenguaje intermedio que será ejecutado por el \acrshort{clr} del \texttt{.NET Framework}.
 
 En términos operativos, el implante es capaz de:
 
 \begin{itemize}
-\item Ejecutar un assembly \textbf{in-process}, cargando el CLR dentro del proceso actual e invocando directamente el código gestionado.
+\item Ejecutar un assembly \textbf{in-process}, cargando el \acrshort{clr} dentro del proceso actual e invocando directamente el código gestionado.
 \item Ejecutarlo en un \textbf{proceso sacrificado}, inicializando el runtime en un proceso externo para reducir la huella y aislar la ejecución.
 \end{itemize}
 

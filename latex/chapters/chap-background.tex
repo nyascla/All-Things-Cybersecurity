@@ -21,7 +21,7 @@ Este modelo estructurado permite mapear comportamientos reales, estandarizar eva
 
 La \textit{Cyber Kill Chain}, desarrollada por Lockheed Martin, describe las fases operativas de un ciberataque con el objetivo de estructurar y contextualizar las acciones del adversario. No se trata de un marco rígido, sino de un modelo conceptual que divide el ataque en etapas bien definidas para facilitar su análisis, detección e interrupción. El modelo identifica las tareas que un adversario debe completar para alcanzar su objetivo final, permitiendo anticipar comportamientos y reforzar las defensas en cada fase.
 
-Los siete pasos de la \textit{Cyber Kill Chain} mejoran la visibilidad del analista sobre el ataque y enriquecen su comprensión de las tácticas, técnicas y procedimientos (TTPs) empleados por el adversario.
+Los siete pasos de la \textit{Cyber Kill Chain} mejoran la visibilidad del analista sobre el ataque y enriquecen su comprensión de las tácticas, técnicas y procedimientos (\acrshort{ttp}s) empleados por el adversario.
 
 \begin{enumerate}
     \item \textbf{Reconocimiento}: Investigación del objetivo y recolección de información.
@@ -29,13 +29,13 @@ Los siete pasos de la \textit{Cyber Kill Chain} mejoran la visibilidad del anali
     \item \textbf{Entrega}: Transmisión del payload mediante el vector seleccionado.
     \item \textbf{Explotación}: Activación del payload aprovechando una vulnerabilidad o interacción del usuario.
     \item \textbf{Instalación}: Establecimiento del implante y preparación del entorno persistente.
-    \item \textbf{Mando y Control (C2)}: Creación del canal de comunicación entre el host comprometido y el adversario.
+    \item \textbf{Mando y Control (\acrshort{c2})}: Creación del canal de comunicación entre el host comprometido y el adversario.
     \item \textbf{Acciones sobre Objetivos}: Ejecución de los objetivos finales, como movimiento lateral, exfiltración o impacto.
 \end{enumerate}
 
 \section{Threat Intelligence}
 
-La Inteligencia de Amenazas es esencial para la simulación de adversarios (\textit{Adversary Simulation}), ya que transforma datos sobre actores maliciosos, campañas y vulnerabilidades en información procesable. Se nutre de análisis técnicos, alertas de organismos de ciberseguridad, investigaciones de la industria y colecciones especializadas de TTPs mantenidas por la comunidad, como la \textit{Adversary Emulation Library} \cite{mitreAEL}, desarrollada por el \textit{MITRE Center for Threat-Informed Defense}. Este recurso proporciona perfiles de adversarios basados en comportamientos observados en grupos APT, aportando una base verificable para la creación de escenarios.
+La Inteligencia de Amenazas es esencial para la simulación de adversarios (\textit{Adversary Simulation}), ya que transforma datos sobre actores maliciosos, campañas y vulnerabilidades en información procesable. Se nutre de análisis técnicos, alertas de organismos de ciberseguridad, investigaciones de la industria y colecciones especializadas de \acrshort{ttp}s mantenidas por la comunidad, como la \textit{Adversary Emulation Library} \cite{mitreAEL}, desarrollada por el \textit{MITRE Center for Threat-Informed Defense}. Este recurso proporciona perfiles de adversarios basados en comportamientos observados en grupos \acrshort{apt}, aportando una base verificable para la creación de escenarios.
 
 Esta información, estructurada mediante MITRE ATT\&CK y contextualizada a través de la \textit{Cyber Kill Chain}, permite diseñar simulaciones realistas, evaluar defensas, identificar brechas y entrenar al personal frente a amenazas alineadas con el panorama actual.
 

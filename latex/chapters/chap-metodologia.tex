@@ -13,14 +13,14 @@ Desde una perspectiva general, la simulación se ha diseñado como un escenario 
 
 \section{Descripción del Atacante}
 
-En este trabajo no se modela un adversario real ni se replica el comportamiento de un APT existente. En su lugar, se diseña un atacante ad hoc, construido específicamente para este escenario con fines didácticos. Este enfoque permite ajustar de forma controlada sus tácticas, técnicas y decisiones operativas para alinearlas con los objetivos formativos del ejercicio.
+En este trabajo no se modela un adversario real ni se replica el comportamiento de un \acrshort{apt} existente. En su lugar, se diseña un atacante ad hoc, construido específicamente para este escenario con fines didácticos. Este enfoque permite ajustar de forma controlada sus tácticas, técnicas y decisiones operativas para alinearlas con los objetivos formativos del ejercicio.
 
 \subsection{Descripción del Ataque (Resumen Ejecutivo)}
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/ataque.png}
-    \caption{Visión general del escenario: el atacante obtiene acceso inicial mediante un dispositivo físico (fase 1) y despliega un implante que mantiene comunicación cifrada con su infraestructura C2 (fase 2).}
+    \caption{Visión general del escenario: el atacante obtiene acceso inicial mediante un dispositivo físico (fase 1) y despliega un implante que mantiene comunicación cifrada con su infraestructura \acrshort{c2} (fase 2).}
     \label{fig:ataque}
 \end{figure}
 
@@ -35,12 +35,12 @@ En la segunda fase, el adversario despliega su componente principal, diseñado p
 A nivel técnico, el incidente simulado se estructura en dos fases diferenciadas que reflejan la progresión del compromiso y la complejidad creciente del ataque.
 
 \textbf{Fase 1: acceso inicial y establecimiento de acceso remoto.}  
-La primera fase comprende la intrusión inicial en el sistema. El acceso se realiza mediante un dispositivo \textit{BadUSB}, seguido de la evasión de mecanismos de protección mediante un \textit{AMSI Bypass} basado en \textit{Memory Patching via Reflection}. Como resultado de esta fase, se consigue establecer una \textit{Reverse Shell} implementada en ensamblador (\textit{ASM}), que proporciona control remoto básico sobre el sistema comprometido.
+La primera fase comprende la intrusión inicial en el sistema. El acceso se realiza mediante un dispositivo \textit{BadUSB}, seguido de la evasión de mecanismos de protección mediante un \textit{\acrshort{amsi} Bypass} basado en \textit{Memory Patching via Reflection}. Como resultado de esta fase, se consigue establecer una \textit{Reverse Shell} implementada en ensamblador (\textit{ASM}), que proporciona control remoto básico sobre el sistema comprometido.
 
 \textbf{Fase 2: ejecución avanzada, evasión y persistencia en memoria.}  
-A partir de la \textit{Reverse Shell} obtenida en la fase anterior, se desarrolla la segunda fase del ataque, centrada en técnicas avanzadas de ejecución en memoria, evasión y persistencia. En esta etapa se emplea \textit{DLL Hijacking} como técnica principal de weaponización, combinando \textit{Side Loading}, \textit{DLL Proxying} y \textit{Reflective Loading}. Estas técnicas permiten la ejecución de código dentro de procesos legítimos, minimizando la huella en disco y favoreciendo un enfoque \textit{fileless}.
+A partir de la \textit{Reverse Shell} obtenida en la fase anterior, se desarrolla la segunda fase del ataque, centrada en técnicas avanzadas de ejecución en memoria, evasión y persistencia. En esta etapa se emplea \textit{\acrshort{dll} Hijacking} como técnica principal de weaponización, combinando \textit{Side Loading}, \textit{\acrshort{dll} Proxying} y \textit{Reflective Loading}. Estas técnicas permiten la ejecución de código dentro de procesos legítimos, minimizando la huella en disco y favoreciendo un enfoque \textit{fileless}.
 
-Asimismo, se utiliza \textit{Reflective Loading} para la carga del módulo de \textit{Sliver C2} directamente en memoria, evitando el uso de \texttt{LoadLibrary} y eliminando la necesidad de escribir artefactos en disco. De este modo, el canal de mando y control se establece completamente en memoria, incrementando significativamente la dificultad de detección y análisis forense.
+Asimismo, se utiliza \textit{Reflective Loading} para la carga del módulo de \textit{Sliver \acrshort{c2}} directamente en memoria, evitando el uso de \texttt{LoadLibrary} y eliminando la necesidad de escribir artefactos en disco. De este modo, el canal de mando y control se establece completamente en memoria, incrementando significativamente la dificultad de detección y análisis forense.
 
 Finalmente, se incorporan mecanismos de persistencia basados en \textit{Living-off-the-Land Binaries} (LOLBins), aprovechando herramientas legítimas del sistema para mantener el acceso en el tiempo sin introducir binarios adicionales en el sistema comprometido.
 
@@ -58,18 +58,18 @@ En este capítulo se describe de forma secuencial la actividad del atacante, inc
     Recopilación de información sobre el entorno objetivo mediante análisis de superficie expuesta, infraestructura Active Directory en GOAD-Light y servicios accesibles de la workstation.
      
     \item \textbf{Preparación de armas (Weaponization) \ref{sec:armamento}:} 
-    Desarrollo del payload en PowerShell, construcción del loader en .NET y preparación del implante de Sliver junto con la infraestructura de C2.
+    Desarrollo del payload en PowerShell, construcción del loader en .NET y preparación del implante de Sliver junto con la infraestructura de \acrshort{c2}.
  
     \item \textbf{Entrega (Delivery) \ref{sec:entrega}:} 
-    Introducción del payload inicial mediante dispositivo BadUSB emulando teclado HID, ejecutando comandos automáticamente en la máquina víctima sin interacción del usuario.
+    Introducción del payload inicial mediante dispositivo BadUSB emulando teclado \acrshort{hid}, ejecutando comandos automáticamente en la máquina víctima sin interacción del usuario.
 
     \item \textbf{Explotación (Exploitation) \ref{sec:explotacion}:} 
     Ejecución inicial de código mediante script de PowerShell que descarga y lanza un payload en \texttt{\$env:TEMP}, estableciendo una reverse shell hacia el servidor del atacante.
  
     \item \textbf{Instalación (Installation) \ref{sec:instalacion}:} 
-    Despliegue de DLL maliciosa mediante DLL hijacking en el binario de Calibre y establecimiento de persistencia mediante ejecución del payload en cada inicio del sistema.
+    Despliegue de \acrshort{dll} maliciosa mediante \acrshort{dll} hijacking en el binario de Calibre y establecimiento de persistencia mediante ejecución del payload en cada inicio del sistema.
 
-    \item \textbf{Comando y Control (Command and Control, C2) \ref{sec:comando-control}:} 
+    \item \textbf{Comando y Control (Command and Control, \acrshort{c2}) \ref{sec:comando-control}:} 
     Comunicación persistente del implante de Sliver con infraestructura externa mediante beaconing HTTPS cifrado, permitiendo ejecución remota de comandos y exfiltración de resultados.
 
     \item \textbf{Acciones sobre el objetivo (Actions on Objectives) \ref{sec:acciones-sobre-objetivo}:} 
@@ -86,28 +86,28 @@ Este capítulo ofrece una visión complementaria desde la perspectiva del atacan
 \begin{itemize}
 
     \item \textbf{Acceso Inicial: Justificación del uso de BadUSB \ref{sec:bad-usb}:}
-    Explicación de la elección de un dispositivo BadUSB como vector de acceso inicial, así como las ventajas operativas de la emulación de un teclado HID y las técnicas utilizadas para evadir mecanismos de protección como AMSI.
+    Explicación de la elección de un dispositivo BadUSB como vector de acceso inicial, así como las ventajas operativas de la emulación de un teclado \acrshort{hid} y las técnicas utilizadas para evadir mecanismos de protección como \acrshort{amsi}.
 
     \item \textbf{Programación de shellcodes \ref{sec:shellcodes}:}
-    Desarrollo de shellcodes independientes de posición (PIC), técnicas de runtime linking, diferencias entre las ABI de arquitecturas x86 y x64 y construcción de los payloads finales utilizados durante la operación.
+    Desarrollo de shellcodes independientes de posición (\acrshort{pic}), técnicas de runtime linking, diferencias entre las \acrshort{abi} de arquitecturas x86 y x64 y construcción de los payloads finales utilizados durante la operación.
 
     \item \textbf{Inyección de código \ref{sec:inyeccion}:}
-    Estudio de las técnicas empleadas para ejecutar código dentro de procesos legítimos, centrándose en el uso de DLL Hijacking como mecanismo de ejecución.
+    Estudio de las técnicas empleadas para ejecutar código dentro de procesos legítimos, centrándose en el uso de \acrshort{dll} Hijacking como mecanismo de ejecución.
 
-    \item \textbf{Weaponización de DLL Hijacking \ref{sec:weaponizacion-dll}:}
-    Análisis de distintas estrategias para convertir el DLL Hijacking en un mecanismo de ejecución robusto, incluyendo Side Loading, DLL Proxying y Reflective Loading.
+    \item \textbf{Weaponización de \acrshort{dll} Hijacking \ref{sec:weaponizacion-dll}:}
+    Análisis de distintas estrategias para convertir el \acrshort{dll} Hijacking en un mecanismo de ejecución robusto, incluyendo Side Loading, \acrshort{dll} Proxying y Reflective Loading.
 
-    \item \textbf{Syscalls y evasión de EDR \ref{sec:syscalls}:}
-    Comparativa entre los distintos niveles de acceso al sistema (Win32 API, Native API, Direct Syscalls e Indirect Syscalls), analizando su impacto en la evasión de soluciones EDR y mecanismos de monitorización.
+    \item \textbf{Syscalls y evasión de \acrshort{edr} \ref{sec:syscalls}:}
+    Comparativa entre los distintos niveles de acceso al sistema (Win32 API, Native API, Direct Syscalls e Indirect Syscalls), analizando su impacto en la evasión de soluciones \acrshort{edr} y mecanismos de monitorización.
 
     \item \textbf{Persistencia \ref{sec:persistencia}:}
     Descripción de los mecanismos implementados para mantener el acceso al sistema comprometido tras la ejecución inicial del implante.
 
-    \item \textbf{Infraestructura C2 \ref{sec:c2}:}
+    \item \textbf{Infraestructura \acrshort{c2} \ref{sec:c2}:}
     Configuración y despliegue de la infraestructura de Command and Control basada en Sliver, incluyendo la generación de implantes, listeners y comunicaciones cifradas.
 
     \item \textbf{Acciones finales \ref{sec:acciones-finales}:}
-    Presentación de las técnicas utilizadas para la ejecución de capacidades avanzadas desde el implante, incluyendo el uso de BOF/COFF, Shared Library Side Loading y assemblies .NET como mecanismos de post-explotación.
+    Presentación de las técnicas utilizadas para la ejecución de capacidades avanzadas desde el implante, incluyendo el uso de \acrshort{bof}/\acrshort{coff}, Shared Library Side Loading y assemblies .NET como mecanismos de post-explotación.
 
 \end{itemize}
 
@@ -124,9 +124,9 @@ Dentro del dominio se incluye una \textbf{estación de trabajo Windows 11}, comp
 Con el objetivo de aumentar la visibilidad del análisis forense y enriquecer el conjunto de artefactos disponibles, se incorporan dos componentes adicionales:
 
 \begin{itemize}
-    \item \textbf{Suricata}: desplegado para la monitorización del tráfico de red, permitiendo detectar y correlacionar conexiones sospechosas, tráfico de comando y control (\textit{C2}) y patrones de actividad maliciosa.
+    \item \textbf{Suricata}: desplegado para la monitorización del tráfico de red, permitiendo detectar y correlacionar conexiones sospechosas, tráfico de comando y control (\textit{\acrshort{c2}}) y patrones de actividad maliciosa.
     
-    \item \textbf{Sysmon}: instalado en la estación de trabajo para generar telemetría avanzada de eventos en Windows, incluyendo creación de procesos, carga de DLLs, conexiones de red y modificaciones en el registro, facilitando la reconstrucción temporal del ataque.
+    \item \textbf{Sysmon}: instalado en la estación de trabajo para generar telemetría avanzada de eventos en Windows, incluyendo creación de procesos, carga de \acrshort{dll}s, conexiones de red y modificaciones en el registro, facilitando la reconstrucción temporal del ataque.
 \end{itemize}
 
 \subsection{Recopilación de evidencias}
@@ -161,7 +161,7 @@ El contenido se organiza en dos bloques complementarios:
     Vocabulario técnico e instituciones sobre las que se apoya el contenido del trabajo.
 
     \item \textbf{Capítulo \ref{chap:incidente}: Reconstrucción del ciberataque.}  
-    Presenta una visión estructurada del ataque, mapeando cada acción del adversario con las técnicas MITRE ATT\&CK aplicadas y con los artefactos del sistema víctima donde podría encontrarse evidencia relevante. Este bloque está orientado a facilitar el trabajo del analista DFIR durante el proceso de correlación y reconstrucción de los hechos.
+    Presenta una visión estructurada del ataque, mapeando cada acción del adversario con las técnicas MITRE ATT\&CK aplicadas y con los artefactos del sistema víctima donde podría encontrarse evidencia relevante. Este bloque está orientado a facilitar el trabajo del analista \acrshort{dfir} durante el proceso de correlación y reconstrucción de los hechos.
 
     \item \textbf{Capítulo \ref{chap:red-team}: Red Team Notes.}  
     Describe el ataque desde el punto de vista del adversario, explicando el razonamiento, las decisiones técnicas y los procedimientos utilizados en cada fase. Ofrece una visión interna del flujo del ataque y del funcionamiento de cada componente ofensivo.

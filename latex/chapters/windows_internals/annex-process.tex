@@ -12,7 +12,7 @@ A continuación se describen los principales componentes internos de un proceso 
 
 \begin{itemize}
     \item \textbf{EPROCESS:}  
-    Estructura interna del kernel que representa a un proceso. Contiene información crítica como el identificador del proceso (PID), la lista de hilos asociados, permisos, límites de memoria, una referencia al \textit{Process Environment Block} (PEB), así como metadatos utilizados por el planificador y el gestor de seguridad. Constituye la representación fundamental del proceso en modo kernel.
+    Estructura interna del kernel que representa a un proceso. Contiene información crítica como el identificador del proceso (PID), la lista de hilos asociados, permisos, límites de memoria, una referencia al \textit{Process Environment Block} (\acrshort{peb}), así como metadatos utilizados por el planificador y el gestor de seguridad. Constituye la representación fundamental del proceso en modo kernel.
 
     \item \textbf{Hilos:}  
     Conjunto de hilos pertenecientes al proceso. Cada hilo es administrado en modo kernel mediante la estructura \texttt{ETHREAD}, mientras que en modo usuario dispone de su propio \textit{Thread Environment Block} (TEB).
@@ -23,8 +23,8 @@ A continuación se describen los principales componentes internos de un proceso 
     \item \textbf{Memoria:}  
     Comprende todo el espacio de direcciones virtuales asignado al proceso, incluyendo secciones de código, datos, pilas, \textit{heaps} y regiones mapeadas dinámicamente.
 
-    \item \textbf{Módulos (DLLs):}  
-    Lista de módulos y bibliotecas cargadas en el proceso, mantenida en el \textit{PEB Ldr}.
+    \item \textbf{Módulos (\acrshort{dll}s):}  
+    Lista de módulos y bibliotecas cargadas en el proceso, mantenida en el \textit{\acrshort{peb} Ldr}.
 \end{itemize}
 
 
@@ -65,7 +65,7 @@ Para una explicación detallada y rigurosa de este mecanismo, se recomienda la e
         \item Cumple un rol análogo a \texttt{ld.so} en sistemas Linux.
     \end{itemize}
 
-    \item \textbf{Asignación del PEB (Process Environment Block):}  
+    \item \textbf{Asignación del \acrshort{peb} (Process Environment Block):}  
     Una vez inicializado el espacio de direcciones, el kernel crea y mapea el \texttt{PEB}, una estructura de 1--2 páginas ubicada en \textit{user mode} que describe el estado general del proceso.  
     El \texttt{PEB} contiene, entre otros:
     \begin{itemize}
@@ -103,22 +103,22 @@ Para una explicación detallada y rigurosa de este mecanismo, se recomienda la e
 
 \subsection{Process Environment Block (PEB)}
 
-El \textbf{Process Environment Block (PEB)} es una estructura interna de Windows que almacena información esencial sobre un proceso en ejecución. Aunque Microsoft no publica una definición oficial completa de esta estructura, su diseño es conocido gracias al análisis inverso y puede variar ligeramente entre versiones del sistema operativo. El PEB reside en \textit{user mode} y es único para cada proceso.
+El \textbf{Process Environment Block (\acrshort{peb})} es una estructura interna de Windows que almacena información esencial sobre un proceso en ejecución. Aunque Microsoft no publica una definición oficial completa de esta estructura, su diseño es conocido gracias al análisis inverso y puede variar ligeramente entre versiones del sistema operativo. El \acrshort{peb} reside en \textit{user mode} y es único para cada proceso.
 
-Entre los elementos más relevantes del PEB se encuentran:
+Entre los elementos más relevantes del \acrshort{peb} se encuentran:
 
 \begin{itemize}
     \item \textbf{ImageBaseAddress:} Dirección base donde se ha mapeado la imagen principal del proceso.
     \item \textbf{BeingDebugged:} Indicador de si el proceso está siendo depurado.
-    \item \textbf{Ldr (PEB\_LDR\_DATA):} Estructura que mantiene la lista de módulos cargados (DLLs).  
+    \item \textbf{Ldr (PEB\_LDR\_DATA):} Estructura que mantiene la lista de módulos cargados (\acrshort{dll}s).  
     Recorrer esta lista es un mecanismo ampliamente utilizado por \textit{shellcode} para recuperar la base de \texttt{kernel32.dll} y resolver funciones de la WinAPI.
 \end{itemize}
 
-Una explicación detallada y ejemplos de cómo iterar el PEB, tanto desde C como desde WinDbg, pueden encontrarse en \cite{nyascla_walking_peb}.
+Una explicación detallada y ejemplos de cómo iterar el \acrshort{peb}, tanto desde C como desde WinDbg, pueden encontrarse en \cite{nyascla_walking_peb}.
 
 \subsubsection*{Iterar el PEB para recuperar la base de un módulo}
 
-El procedimiento estándar para recorrer el PEB y obtener la base de una DLL concreta es el siguiente:
+El procedimiento estándar para recorrer el \acrshort{peb} y obtener la base de una \acrshort{dll} concreta es el siguiente:
 
 \begin{enumerate}
     \item Desde la estructura \texttt{\_PEB}, acceder al miembro \texttt{Ldr}, de tipo \texttt{\_PEB\_LDR\_DATA}.

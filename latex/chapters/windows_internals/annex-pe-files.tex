@@ -1,48 +1,48 @@
 \subsection{Portable Executable (PE)}
 
-El formato \textit{Portable Executable} (PE) es el estándar de Windows para almacenar ejecutables, bibliotecas dinámicas (\textit{DLLs}) y otros tipos de archivos que pueden ser cargados y ejecutados por el sistema operativo.  
+El formato \textit{Portable Executable} (\acrshort{pe}) es el estándar de Windows para almacenar ejecutables, bibliotecas dinámicas (\textit{\acrshort{dll}s}) y otros tipos de archivos que pueden ser cargados y ejecutados por el sistema operativo.  
 Es el equivalente funcional del formato ELF en Linux y proporciona toda la información necesaria para que el cargador de Windows gestione la ejecución de un programa: estructura de secciones, tablas de importación y exportación, encabezados, y metadatos de la aplicación.  
 Gracias a esta organización, el sistema puede ubicar código y datos en memoria, resolver dependencias dinámicas y garantizar la correcta ejecución de procesos de manera segura y eficiente.
 
-Los PE file es un fichero con valores hexadecimales dispuestos en un layout especifico para poder ser recorrido
+Los \acrshort{pe} file es un fichero con valores hexadecimales dispuestos en un layout especifico para poder ser recorrido
 
-Un archivo PE (\textit{Portable Executable}) es un fichero binario cuyos valores están organizados en un diseño específico que permite recorrerlo y analizarlo de manera estructurada.  
+Un archivo \acrshort{pe} (\textit{Portable Executable}) es un fichero binario cuyos valores están organizados en un diseño específico que permite recorrerlo y analizarlo de manera estructurada.  
 La disposición de los encabezados, secciones y demás campos, incluyendo los offsets estándar de cada componente, se ilustra detalladamente en la infografía disponible en \cite{peinfografia}.
 
 \subsubsection{Headers}
 
-En el offset \texttt{0x00} se encuentran los encabezados del PE, que contienen información general sobre el ejecutable y permiten al sistema operativo interpretar correctamente el archivo. Entre los campos más relevantes se incluyen:
+En el offset \texttt{0x00} se encuentran los encabezados del \acrshort{pe}, que contienen información general sobre el ejecutable y permiten al sistema operativo interpretar correctamente el archivo. Entre los campos más relevantes se incluyen:
 
 \begin{itemize}
     \item \textbf{AddressOfEntryPoint:} indica la dirección virtual donde comienza la ejecución del programa dentro de la sección de código principal.
     \item \textbf{Machine:} especifica la arquitectura objetivo del ejecutable (por ejemplo, x86 o x86\_64).
-    \item \textbf{NumberOfSections:} indica cuántas secciones contiene el PE.
-    \item \textbf{DataDirectory:} tabla de referencias a otras estructuras del PE, como la tabla de importaciones, exportaciones, recursos y la tabla de relocaciones.
+    \item \textbf{NumberOfSections:} indica cuántas secciones contiene el \acrshort{pe}.
+    \item \textbf{DataDirectory:} tabla de referencias a otras estructuras del \acrshort{pe}, como la tabla de importaciones, exportaciones, recursos y la tabla de relocaciones.
 \end{itemize}
 
-Estos campos permiten al sistema operativo localizar las distintas secciones del PE y gestionar correctamente la memoria virtual del proceso al cargar el ejecutable. La estructura completa y los offsets de cada campo se pueden consultar en la infografía de referencia~\cite{peinfografia}.
+Estos campos permiten al sistema operativo localizar las distintas secciones del \acrshort{pe} y gestionar correctamente la memoria virtual del proceso al cargar el ejecutable. La estructura completa y los offsets de cada campo se pueden consultar en la infografía de referencia~\cite{peinfografia}.
 
-Implementación en C para iterar y recuperar los campos de los encabezados de un archivo PE~\cite{walking_PE_headers}.
+Implementación en C para iterar y recuperar los campos de los encabezados de un archivo \acrshort{pe}~\cite{walking_PE_headers}.
 
 \subsubsection{Headers Tables}
 
-Las cabeceras de un archivo PE contienen varias tablas que son fundamentales para la correcta creación y carga de un proceso a partir de un ejecutable.  
-Estas tablas, que incluyen información sobre exportaciones, importaciones y relocaciones, se encuentran referenciadas en el arreglo \textit{Data Directory} del encabezado opcional del PE.
+Las cabeceras de un archivo \acrshort{pe} contienen varias tablas que son fundamentales para la correcta creación y carga de un proceso a partir de un ejecutable.  
+Estas tablas, que incluyen información sobre exportaciones, importaciones y relocaciones, se encuentran referenciadas en el arreglo \textit{Data Directory} del encabezado opcional del \acrshort{pe}.
 
-Para ver cómo recorrer un PE y acceder a cada una de estas tablas, se incluyen ejemplos de código en C en los repositorios de GitHub correspondientes, los cuales se adjuntan en cada sección específica.
+Para ver cómo recorrer un \acrshort{pe} y acceder a cada una de estas tablas, se incluyen ejemplos de código en C en los repositorios de GitHub correspondientes, los cuales se adjuntan en cada sección específica.
 
 \paragraph{Exports}
 
-Si el archivo PE corresponde a una biblioteca compartida (\textit{DLL}) y exporta funcionalidad, 
+Si el archivo \acrshort{pe} corresponde a una biblioteca compartida (\textit{\acrshort{dll}}) y exporta funcionalidad, 
 esta información se almacena en la tabla de exportaciones.  
 A diferencia de Linux, donde las funciones suelen estar disponibles por defecto, en Windows 
 cada símbolo debe exportarse explícitamente para poder ser utilizado por otros módulos.
 
 La tabla de exportaciones es esencial durante la carga de un proceso, ya que el \textit{Windows Loader} 
-la utiliza para resolver las direcciones de las funciones exportadas por cada DLL, garantizando que puedan 
+la utiliza para resolver las direcciones de las funciones exportadas por cada \acrshort{dll}, garantizando que puedan 
 ser correctamente mapeadas y enlazadas en el espacio de direcciones del proceso que las consume.
 
-Ejemplos de código para analizar y recorrer la tabla de exportaciones de un fichero PE, 
+Ejemplos de código para analizar y recorrer la tabla de exportaciones de un fichero \acrshort{pe}, 
 identificando las funciones exportadas y sus direcciones virtuales, pueden encontrarse en~\cite{walking_PE_exports}.  
 
 Además, se incluye una implementación propia de \texttt{GetProcAddress} en ensamblador x64, 
@@ -52,13 +52,13 @@ equivalente para arquitecturas x86~\cite{x86_get_proc}.
 
 \paragraph{Imports}
 
-La tabla de importaciones es fundamental para el \textit{Windows Loader}, ya que contiene información sobre todas las dependencias externas que un ejecutable requiere. Durante la carga del proceso, el loader consulta esta tabla para determinar qué DLLs deben cargarse en memoria y, una vez cargadas, registra las direcciones de memoria de las funciones importadas.
+La tabla de importaciones es fundamental para el \textit{Windows Loader}, ya que contiene información sobre todas las dependencias externas que un ejecutable requiere. Durante la carga del proceso, el loader consulta esta tabla para determinar qué \acrshort{dll}s deben cargarse en memoria y, una vez cargadas, registra las direcciones de memoria de las funciones importadas.
 
 De esta manera, cada llamada a una función importada en tiempo de ejecución puede resolverse inmediatamente usando la dirección ya conocida, evitando la necesidad de búsquedas adicionales. Esto permite que el código realice llamadas directas a las funciones de las bibliotecas externas de forma eficiente y segura.
 
-Se proporciona una implementación en C para recorrer la tabla de importaciones de un PE y listar las librerías y funciones utilizadas~\cite{walking_PE_imports}.  
+Se proporciona una implementación en C para recorrer la tabla de importaciones de un \acrshort{pe} y listar las librerías y funciones utilizadas~\cite{walking_PE_imports}.  
 
-Además, se incluye una implementación propia de un \textit{Windows Loader} simplificado para cargar una DLL, en la que puede observarse explícitamente el proceso de parcheo de la \textit{Import Address Table} (IAT) durante la resolución de dependencias~\cite{walkingloader}.
+Además, se incluye una implementación propia de un \textit{Windows Loader} simplificado para cargar una \acrshort{dll}, en la que puede observarse explícitamente el proceso de parcheo de la \textit{Import Address Table} (\acrshort{iat}) durante la resolución de dependencias~\cite{walkingloader}.
 
 \paragraph{Relocations}
 
@@ -67,7 +67,7 @@ Si el ejecutable no puede cargarse en su \textit{ImageBase} preferido, el \texti
 \[
 \Delta = \text{ImageBaseReal} - \text{ImageBasePreferida}
 \]
-Este delta debe sumarse a todas las direcciones absolutas del ejecutable, y la lista exacta de ubicaciones que requieren dicho parcheo se encuentra en la sección \texttt{.reloc} del PE.
+Este delta debe sumarse a todas las direcciones absolutas del ejecutable, y la lista exacta de ubicaciones que requieren dicho parcheo se encuentra en la sección \texttt{.reloc} del \acrshort{pe}.
 
 La tabla de relocaciones no es una tabla plana, sino una lista de \textit{bloques}.  
 Cada bloque describe una página de memoria de 4\,KB que contiene una o más direcciones que deben ser ajustadas. 
@@ -100,30 +100,30 @@ La dirección final a parchear se obtiene sumando este offset al \texttt{Virtual
 
 En conjunto, la tabla de relocaciones actúa como un “mapa de parches” generado por el compilador, que permite al \textit{Windows Loader} ajustar todas las direcciones absolutas del binario cuando se carga en una posición distinta a la prevista originalmente.
 
-Ejemplo de código para iterar la tabla de relocaciones de un PE y analizar los desplazamientos aplicables a las direcciones del ejecutable~\cite{walking_PE_relocs}.
+Ejemplo de código para iterar la tabla de relocaciones de un \acrshort{pe} y analizar los desplazamientos aplicables a las direcciones del ejecutable~\cite{walking_PE_relocs}.
 
 \subsubsection{Sections}
 
-En términos de funcionalidad, las secciones del PE son equivalentes a los segmentos de un archivo ELF en Linux.
+En términos de funcionalidad, las secciones del \acrshort{pe} son equivalentes a los segmentos de un archivo ELF en Linux.
 
-Las secciones se encuentran inmediatamente después de los encabezados del PE y están representadas como un conjunto de estructuras, una por cada sección.  
+Las secciones se encuentran inmediatamente después de los encabezados del \acrshort{pe} y están representadas como un conjunto de estructuras, una por cada sección.  
 Cada estructura proporciona información como el offset y el tamaño de la sección, tanto en disco como en memoria. Esta información es utilizada por el \textit{Windows Loader} para definir las distintas regiones de memoria con sus protecciones específicas (lectura, escritura, ejecución).
 
-Las secciones de un proceso en memoria, como \texttt{.text}, \texttt{.data}, \texttt{.reloc}, \texttt{.idata} o \texttt{.edata}, ya están definidas en el archivo PE.  
-Durante la carga, el loader recorre estas secciones, las mapea a las direcciones que tendrán en memoria y aplica los parcheos necesarios, como completar la IAT con las direcciones reales de las funciones importadas y ajustar cualquier relocación requerida.
+Las secciones de un proceso en memoria, como \texttt{.text}, \texttt{.data}, \texttt{.reloc}, \texttt{.idata} o \texttt{.edata}, ya están definidas en el archivo \acrshort{pe}.  
+Durante la carga, el loader recorre estas secciones, las mapea a las direcciones que tendrán en memoria y aplica los parcheos necesarios, como completar la \acrshort{iat} con las direcciones reales de las funciones importadas y ajustar cualquier relocación requerida.
 
-En el siguiente código se muestra cómo recorrer las secciones de un archivo PE~\cite{walking_PE_headers}.
+En el siguiente código se muestra cómo recorrer las secciones de un archivo \acrshort{pe}~\cite{walking_PE_headers}.
 
-En la implementación propia de un \textit{Windows Loader} simplificado~\cite{walkingloader}, también se muestra cómo, desde C, se pueden iterar las secciones del PE, reservar la memoria correspondiente, mapearlas adecuadamente y aplicar los parcheos necesarios.
+En la implementación propia de un \textit{Windows Loader} simplificado~\cite{walkingloader}, también se muestra cómo, desde C, se pueden iterar las secciones del \acrshort{pe}, reservar la memoria correspondiente, mapearlas adecuadamente y aplicar los parcheos necesarios.
 
 
 \subsubsection{Ejemplo práctico: parcheo de un PE y modificación del Entry Point}
 
-Como cierre a esta sección, se presenta un ejemplo práctico que ilustra cómo modificar un archivo PE para alterar su flujo de ejecución durante la carga. En este proyecto se incluye un script en Python que automatiza el proceso de parcheo de un binario arbitrario, incorporando un \textit{shellcode} desarrollado específicamente para esta prueba. Dicho \textit{shellcode} muestra una ventana mediante la función \texttt{MessageBoxA} antes de que el programa continúe ejecutándose con normalidad.
+Como cierre a esta sección, se presenta un ejemplo práctico que ilustra cómo modificar un archivo \acrshort{pe} para alterar su flujo de ejecución durante la carga. En este proyecto se incluye un script en Python que automatiza el proceso de parcheo de un binario arbitrario, incorporando un \textit{shellcode} desarrollado específicamente para esta prueba. Dicho \textit{shellcode} muestra una ventana mediante la función \texttt{MessageBoxA} antes de que el programa continúe ejecutándose con normalidad.
 
-La técnica empleada consiste en insertar el \textit{shellcode} dentro del propio archivo PE, ubicándolo en una zona del fichero que no contenga datos relevantes, y modificar el \textit{Entry Point} para que apunte a este nuevo código en lugar del original. Para mantener el comportamiento legítimo del ejecutable, el \textit{shellcode} incluye un salto de retorno hacia la dirección del \textit{Entry Point} original, de manera que, tras finalizar la ejecución de la rutina inyectada, el programa retoma su flujo normal sin alteraciones perceptibles.
+La técnica empleada consiste en insertar el \textit{shellcode} dentro del propio archivo \acrshort{pe}, ubicándolo en una zona del fichero que no contenga datos relevantes, y modificar el \textit{Entry Point} para que apunte a este nuevo código en lugar del original. Para mantener el comportamiento legítimo del ejecutable, el \textit{shellcode} incluye un salto de retorno hacia la dirección del \textit{Entry Point} original, de manera que, tras finalizar la ejecución de la rutina inyectada, el programa retoma su flujo normal sin alteraciones perceptibles.
 
-Este ejemplo demuestra de forma práctica cómo las estructuras internas del formato PE pueden manipularse para modificar el inicio de ejecución sin comprometer la funcionalidad del binario, proporcionando un entorno ideal para experimentar con técnicas de parcheo, carga manual y redirección de control.
+Este ejemplo demuestra de forma práctica cómo las estructuras internas del formato \acrshort{pe} pueden manipularse para modificar el inicio de ejecución sin comprometer la funcionalidad del binario, proporcionando un entorno ideal para experimentar con técnicas de parcheo, carga manual y redirección de control.
 
 El script encargado del parcheo puede encontrarse en~\cite{binary_patching_entrypoint},
 y el \textit{shellcode} desarrollado específicamente para esta prueba en~\cite{messagebox_patch_shellcode}.
